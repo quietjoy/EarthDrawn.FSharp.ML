@@ -31,7 +31,11 @@ let readData (path : string) =
 let linReg (X:Matrix<float>) (y:Matrix<float>)=
     (X.Transpose()*X).Inverse()*X.Transpose()*y
 
-
+// ********************************
+// POTENTIAL TYPE EXTENTIONS
+// ********************************
+let predict (data:Matrix<float>) (theta:Matrix<float>) =
+    data.Transpose()*theta
 
 // ********************************
 // VARIABLES
