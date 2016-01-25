@@ -5,7 +5,6 @@ open FSharp.Data
 open MathNet.Numerics.LinearAlgebra;
 open MathNet.Numerics.LinearAlgebra.Double;
 
-
 // ********************************    
 // BUILDING MATRICIES
 // ********************************

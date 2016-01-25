@@ -3,9 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.24720.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "EarthDrawn.FSharp.ML", "EarthDrawn.FSharp.ML\EarthDrawn.FSharp.ML.fsproj", "{257299A8-6FE1-4C73-8A2E-F19F1217629A}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "EarthDrawn.FSharp.ML.Scripts", "EarthDrawn.FSharp.ML\EarthDrawn.FSharp.ML.Scripts.fsproj", "{257299A8-6FE1-4C73-8A2E-F19F1217629A}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{409904D8-53F2-4DD0-8D01-F89F59A364D1}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "EarthDrawn.FSharp.ML.Source", "EarthDrawn.FSharp.ML.Source\EarthDrawn.FSharp.ML.Source.fsproj", "{B73B95AF-644E-4816-864D-CFF1E83B57BB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,6 +19,10 @@ Global
 		{257299A8-6FE1-4C73-8A2E-F19F1217629A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{257299A8-6FE1-4C73-8A2E-F19F1217629A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{257299A8-6FE1-4C73-8A2E-F19F1217629A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B73B95AF-644E-4816-864D-CFF1E83B57BB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B73B95AF-644E-4816-864D-CFF1E83B57BB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B73B95AF-644E-4816-864D-CFF1E83B57BB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B73B95AF-644E-4816-864D-CFF1E83B57BB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
