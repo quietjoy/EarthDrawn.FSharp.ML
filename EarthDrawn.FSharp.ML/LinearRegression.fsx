@@ -10,6 +10,7 @@ open MathNet.Numerics.LinearAlgebra.Double;
 // BUILDING MATRICIES
 // ********************************
 let M = Matrix<float>.Build
+let V = Vector<float>.Build
 
 // Turn the array of string[] to an array of float[]
 // TODO: Take into account cultural differences of floats
@@ -35,7 +36,10 @@ let linReg (X:Matrix<float>) (y:Matrix<float>)=
 // POTENTIAL TYPE EXTENTIONS
 // ********************************
 let predict (data:Matrix<float>) (theta:Matrix<float>) =
-    data.Transpose()*theta
+    data*theta
+
+//let standardError (p:Matrix<float>) (y:Matrix<float>) =
+//    ((p-y).*(p-y)).RowSums
 
 // ********************************
 // VARIABLES
@@ -46,3 +50,6 @@ let data =
 let X = M.Dense(data.RowCount, 1, 1.0).Append(data.RemoveColumn(data.ColumnCount-1))
 let y = M.DenseOfColumnVectors(data.Column(data.ColumnCount-1))
 let theta = linReg X y
+let p = predict  X  theta
+
+//let s = standardError p y
