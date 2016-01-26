@@ -1,12 +1,14 @@
 ﻿#r @"..\packages\FSharp.Data.2.2.5\lib\net40\FSharp.Data.dll"
 #r @"..\packages\MathNet.Numerics.3.10.0\lib\net40\MathNet.Numerics.dll"
 
+#load "..\packages\FSharp.Charting.0.90.13\FSharp.Charting.fsx"
 #load @"C:\Users\andre\Source\OSS\EarthDrawn.FSharp.ML\EarthDrawn.FSharp.ML.Source\LinearRegression.fs"
 
 open FSharp.Data
 open MathNet.Numerics.LinearAlgebra;
 open MathNet.Numerics.LinearAlgebra.Double;
 open EarthDrawn.FSharp.ML.Source;
+open FSharp.Charting
 
 
 // ********************************    
@@ -66,6 +68,18 @@ let p = predict  X  theta
 let s = standardError p y
 
 // ********************************
-// VARIABLES
+// Playing
 // ********************************
 let carPrice = LinearRegression.LinearRegression(@"C:\Users\andre\Source\OSS\EarthDrawn.FSharp.ML\TestingData\LinearRegression\List Price Vs. Best Price for a New GMC Pickup.csv")
+
+
+//
+//let wb = WorldBankData.GetDataContext()
+//
+//let eWater = wb.Countries
+//                .``Egypt, Arab Rep.``
+//                .Indicators.``Annual freshwater withdrawals, total (% of internal resources)``
+//            |> Chart.Line
+//    
+//let ePop = wb.Countries.``Egypt, Arab Rep.``.Indicators.``Population, total`` |> Chart.Line
+
