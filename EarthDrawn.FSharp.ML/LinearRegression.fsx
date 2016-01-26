@@ -40,16 +40,13 @@ let predict (data:Matrix<float>) (theta:Matrix<float>) =
 // Calculate the standard error of the estimates
 // p is a vector containing the predictions
 // y is a vector containing the actual values
+// n-2 degrees of freedom
 let standardError (p:Matrix<float>) (y:Matrix<float>) =
     let sum = (p-y).Enumerate() |> Seq.map (fun x -> x**2.0) |> Seq.sum
-    sqrt (sum/(float y.RowCount))
+    sqrt (sum/(float (y.RowCount-2)))
 
-// Prediction Intervals
-// Do 95% of the predections fall within +/- 2*standard error
-// p is a float representing the size of the prediction interval
-// let predictionInterval (p:float) 
-
-// Confidence Interval
+// TODO: Calculate Prediction Intervals
+    
 
 // ********************************
 // VARIABLES
