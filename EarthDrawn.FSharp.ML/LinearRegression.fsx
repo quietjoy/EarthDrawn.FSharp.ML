@@ -37,8 +37,19 @@ let linReg (X:Matrix<float>) (y:Matrix<float>)=
 let predict (data:Matrix<float>) (theta:Matrix<float>) =
     data*theta
 
-//let standardError (p:Matrix<float>) (y:Matrix<float>) =
-//    ((p-y).*(p-y)).RowSums
+// Calculate the standard error of the estimates
+// p is a vector containing the predictions
+// y is a vector containing the actual values
+let standardError (p:Matrix<float>) (y:Matrix<float>) =
+    let sum = (p-y).Enumerate() |> Seq.map (fun x -> x**2.0) |> Seq.sum
+    sqrt (sum/(float y.RowCount))
+
+// Prediction Intervals
+// Do 95% of the predections fall within +/- 2*standard error
+// p is a float representing the size of the prediction interval
+// let predictionInterval (p:float) 
+
+// Confidence Interval
 
 // ********************************
 // VARIABLES
@@ -51,4 +62,4 @@ let y = M.DenseOfColumnVectors(data.Column(data.ColumnCount-1))
 let theta = linReg X y
 let p = predict  X  theta
 
-//let s = standardError p y
+let s = standardError p y
