@@ -1,9 +1,13 @@
 ﻿#r @"..\packages\FSharp.Data.2.2.5\lib\net40\FSharp.Data.dll"
 #r @"..\packages\MathNet.Numerics.3.10.0\lib\net40\MathNet.Numerics.dll"
 
+#load @"C:\Users\andre\Source\OSS\EarthDrawn.FSharp.ML\EarthDrawn.FSharp.ML.Source\LinearRegression.fs"
+
 open FSharp.Data
 open MathNet.Numerics.LinearAlgebra;
 open MathNet.Numerics.LinearAlgebra.Double;
+open EarthDrawn.FSharp.ML.Source;
+
 
 // ********************************    
 // BUILDING MATRICIES
@@ -60,3 +64,8 @@ let theta = linReg X y
 let p = predict  X  theta
 
 let s = standardError p y
+
+// ********************************
+// VARIABLES
+// ********************************
+let carPrice = LinearRegression.LinearRegression(@"C:\Users\andre\Source\OSS\EarthDrawn.FSharp.ML\TestingData\LinearRegression\List Price Vs. Best Price for a New GMC Pickup.csv")
