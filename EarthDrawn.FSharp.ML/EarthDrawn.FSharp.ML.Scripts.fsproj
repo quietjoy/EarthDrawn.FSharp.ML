@@ -57,6 +57,7 @@
   <ItemGroup>
     <None Include="LinearRegression.fsx" />
     <Content Include="packages.config" />
+    <None Include="LogisticRegression.fsx" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FSharp.Charting">
