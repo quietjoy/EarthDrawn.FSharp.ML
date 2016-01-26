@@ -40,11 +40,11 @@ module LinearRegression =
 
 
     type LinearRegression(pa:string) = 
-        member this.data = readData pa
-        member this.X = M.Dense(this.data.RowCount, 1, 1.0)
-                            .Append(this.data.RemoveColumn(this.data.ColumnCount-1))
-        member this.y = M.DenseOfColumnVectors(this.data.Column(this.data.ColumnCount-1))
+        member this.trainingData = readData pa
+        member this.X = M.Dense(this.trainingData.RowCount, 1, 1.0)
+                            .Append(this.trainingData.RemoveColumn(this.trainingData.ColumnCount-1))
+        member this.y = M.DenseOfColumnVectors(this.trainingData.Column(this.trainingData.ColumnCount-1))
         member this.theta = linReg this.X this.y
         member this.modelPredictions = predict  this.X  this.theta
-        member this.standardError = calculateStandardError this.p this.y
+        member this.standardError = calculateStandardError this.modelPredictions this.y
 
