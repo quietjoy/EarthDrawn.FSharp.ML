@@ -46,25 +46,41 @@ let computeCost (y:Matrix<float>) (X:Matrix<float>) (theta:Matrix<float>) (lambd
     let J = (1.0/(float X.RowCount))*sum
     J + (lambda/(2.0*m))*(theta |> Matrix.sum)
 
-let computeGradient (y:Matrix<float>) (X:Matrix<float>) (theta:Matrix<float>) (alpha: float) =
+let descent (y:Matrix<float>) (X:Matrix<float>) (theta:Matrix<float>) (alpha: float) =
     let m = (float X.RowCount)
     let hx = (X*theta) |> Matrix.map(fun x -> sigmoid x)
     let h = hx-y
     let sum = X |> Matrix.mapRows (fun i row -> h.[i, 0]*row) |> Matrix.sumCols 
-    alpha*(1.0/m)*sum
+    Matrix.Build.DenseOfColumnVectors (alpha*(1.0/m)*sum) 
+//    (alpha*(1.0/m)*sum)
 
-let costFunction (y:Matrix<float>) (X:Matrix<float>) (theta:Matrix<float>) = 
-    let t1f = computeCost y X theta
-    let t2f = computeGradient y X theta
+ 
+let gradientDescent (y:Matrix<float>) (X:Matrix<float>) (theta:Matrix<float>)
+                    (lambda: float)   (alpha: float)    (iterations: int) =         
+    let mutable returnMatrix = Matrix.Build.Dense(1, 3, 0.0)
+    
+    let place (n: int) = 
+        match n with 
+        | 0 -> returnMatrix.Add(descent y X theta alpha)
+        | _ -> returnMatrix.Add(descent y X (Matrix.Build.DenseOfColumnVectors (returnMatrix.Row((n-1)))) alpha)
+    
+    let placeHolder = Array.init iterations (fun n -> n + 1) |> Array.map (fun i -> place i)
+    
+    returnMatrix
+
+//    let i = (Array2D.zeroCreate<float> iterations 3)
+//    let init_gradient =  Matrix.Build.DenseOfArray i
+//    init_gradient |> Matrix.(fun t -> Some(t, descent y X t alpha))
+
+let costFunction (y:Matrix<float>) (X:Matrix<float>) (theta:Matrix<float>) (alpha: float) = 
+    let t1f = computeCost y X theta alpha
+    let t2f = descent y X theta alpha
     (t1f, t2f)
 
-let performGradientDescent (y:Matrix<float>) (X:Matrix<float>) (theta:Matrix<float>)
-                           (lambda: float) (alpha: float) (iterations: int) =
-    let gradient = 
-    let J = [| for i in 1 .. iterations -> computeCost y X theta lamda |]
+let rec fixedPoint f x =
+    let f_x = f x
+    if f_x = x then x else fixedPoint f f_x;
         
-    
-
 // ********************************
 // VARIABLES
 // ********************************
@@ -75,14 +91,28 @@ let X = Matrix.Build.Dense(data.RowCount, 1, 1.0)
                 .Append(data.RemoveColumn(data.ColumnCount-1))
 let y = Matrix.Build.DenseOfColumnVectors(data.Column(data.ColumnCount-1))
 let theta = Matrix.Build.Dense(X.ColumnCount, 1, 0.0)
-let δ = System.Double.Epsilon ** (1.0 / 3.0)
 
-let lamda = 1.0
-let g, theta_final = costFunction y X theta
+let gg = [|0.0, 0.0, 0.0|]
 
+let lambda = 1.0
+let alpha = 0.01 
+let iterations = 100
 
-//let bfgsMin (initialGuess: float[]) costFunction gradientFunction =
-//    let lbfgsb = DotNumerics.Optimization.L_BFGS_B()
-//    lbfgsb.ComputeMin(costFunction, gradientFunction, initialGuess);
+let g, theta_final = costFunction y X theta alpha
 
-let J = [| for i in 1 .. 100 -> computeCost y X theta lamda |]
+let rr = gradientDescent X y theta lambda alpha iterations
+
+let mutable returnMatrix = Matrix.Build.Dense(3, 1, 0.0)
+//let oo = (descent y X theta alpha)
+//let p = (descent y X theta alpha)
+//returnMatrix.Append(oo)
+//returnMatrix.Append(p)
+
+let place (n: int) = 
+    match n with 
+    | 0 -> returnMatrix.Append(descent y X theta alpha)
+    | _ -> returnMatrix.Append(descent y X (Matrix.Build.DenseOfRowVectors (returnMatrix.Column((n-1)))) alpha)
+    
+let placeHolder = Array.init iterations (fun n -> n + 1) |> Array.map (fun i -> place i)
+    
+returnMatrix
