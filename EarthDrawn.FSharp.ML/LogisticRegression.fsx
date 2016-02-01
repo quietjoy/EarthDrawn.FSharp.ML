@@ -4,10 +4,13 @@
 
 
 #load "..\packages\MathNet.Numerics.FSharp.3.10.0\MathNet.Numerics.fsx"
+#load @"C:\Users\andre\Source\OSS\EarthDrawn.FSharp.ML\EarthDrawn.FSharp.ML.Source\LogisticRegression.fs"
+
 
 open System
 open FSharp.Data
 open MathNet.Numerics.LinearAlgebra
+open EarthDrawn.FSharp.ML.Source
 
 // TODO
 // Implement Gradient descent
@@ -57,16 +60,15 @@ let descent (y:Matrix<float>) (X:Matrix<float>) (theta:Matrix<float>) (alpha: fl
     Matrix.Build.DenseOfColumnVectors (alpha*(1.0/m)*sum) 
 //    (alpha*(1.0/m)*sum)
 
-// Perform gradient descent
-//let gradientDescent (y:Matrix<float>) (X:Matrix<float>) (theta:Matrix<float>)
-//                    (lambda: float)   (alpha: float)    (iterations: int) =         
-//    let mutable returnMatrix = Matrix.Build.Dense(1, 3, 0.0)
-//    let place (n: int) = 
-//        match n with 
-//        | 0 -> returnMatrix.Add(descent y X theta alpha)
-//        | _ -> returnMatrix.Add(descent y X (Matrix.Build.DenseOfColumnVectors (returnMatrix.Row((n-1)))) alpha)
-//    let placeHolder = Array.init iterations (fun n -> n + 1) |> Array.map (fun i -> place i)
-//    returnMatrix
+// Tail recursive gradient descent
+//let rec gradientDescent (count: int) (gradAccum:Matrix<float>) = 
+//    if count = 0 then
+//        gradientDescent (count+1) (gradAccum.Append(descent y X theta alpha)) 
+//    elif count <= X.RowCount then
+//        let prevTheta = Matrix.Build.DenseOfColumnVectors(gradAccum.Column(count-1))
+//        gradientDescent (count+1) (gradAccum.Append(descent y X prevTheta alpha))       
+//    else 
+//        gradAccum
 
 
 // Not sure how this function is used right now
@@ -94,16 +96,9 @@ let iterations = 100
 
 let g, theta_final = costFunction y X theta alpha
 
-//let rr = gradientDescent X y theta lambda alpha iterations
-
-// Testing a tail recursive gradient descent
-let rm = Matrix.Build.Dense(3, X.RowCount, 0.0)
-
-let rec recGradientDescent (count: int) (gradAccum:Matrix<float>) = 
-    if count = 0 then
-        recGradientDescent (count+1) (gradAccum.Append(descent y X theta alpha)) 
-    elif count <= X.RowCount then
-        let prevTheta = Matrix.Build.DenseOfColumnVectors(gradAccum.Column(count-1))
-        recGradientDescent (count+1) (gradAccum.Append(descent y X prevTheta alpha))       
-    else 
-        gradAccum
+// ********************************
+// USING MODULE AND TYPE
+// ********************************
+let path = @"C:\Users\andre\Source\OSS\EarthDrawn.FSharp.ML\TestingData\LogisitcRegression\ex2data1.csv"
+let logisiticReg = LogisticRegression.LogReg(path, alpha, lambda, 100)
+ 
