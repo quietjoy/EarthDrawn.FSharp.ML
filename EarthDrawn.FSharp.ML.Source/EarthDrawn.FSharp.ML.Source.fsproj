@@ -54,6 +54,7 @@
     <Compile Include="LinearRegression.fs" />
     <None Include="Script.fsx" />
     <Content Include="packages.config" />
+    <Compile Include="LogisticRegression.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FSharp.Data">

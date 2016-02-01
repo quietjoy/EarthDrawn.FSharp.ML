@@ -36,16 +36,20 @@ let readData (path : string) =
 // ********************************
 // MAIN LOGISTIC REGRESSION ALGORITHM
 // ********************************
+
+// Compute the sigmoid function
 let sigmoid z = 1.0 / (1.0 + exp -z)
 
+// Calculate the regularized cost associated with a the proposed weights (theta)
 let computeCost (y:Matrix<float>) (X:Matrix<float>) (theta:Matrix<float>) (lambda: float) = 
     let m = (float X.RowCount)
     let h = (X*theta) |> Matrix.map(fun x -> log(sigmoid x))
     let h1 = (X*theta) |> Matrix.map(fun x -> log(1.0-sigmoid x)) 
-    let sum = ((-y.*h) - ((y |> Matrix.map (fun x -> x-1.0)).*h1) |> Matrix.sum)
+    let sum = (-y.*h) - ((y |> Matrix.map (fun x -> x-1.0)).*h1) |> Matrix.sum
     let J = (1.0/(float X.RowCount))*sum
     J + (lambda/(2.0*m))*(theta |> Matrix.sum)
 
+// One step of gradient descent
 let descent (y:Matrix<float>) (X:Matrix<float>) (theta:Matrix<float>) (alpha: float) =
     let m = (float X.RowCount)
     let hx = (X*theta) |> Matrix.map(fun x -> sigmoid x)
@@ -54,32 +58,23 @@ let descent (y:Matrix<float>) (X:Matrix<float>) (theta:Matrix<float>) (alpha: fl
     Matrix.Build.DenseOfColumnVectors (alpha*(1.0/m)*sum) 
 //    (alpha*(1.0/m)*sum)
 
- 
-let gradientDescent (y:Matrix<float>) (X:Matrix<float>) (theta:Matrix<float>)
-                    (lambda: float)   (alpha: float)    (iterations: int) =         
-    let mutable returnMatrix = Matrix.Build.Dense(1, 3, 0.0)
-    
-    let place (n: int) = 
-        match n with 
-        | 0 -> returnMatrix.Add(descent y X theta alpha)
-        | _ -> returnMatrix.Add(descent y X (Matrix.Build.DenseOfColumnVectors (returnMatrix.Row((n-1)))) alpha)
-    
-    let placeHolder = Array.init iterations (fun n -> n + 1) |> Array.map (fun i -> place i)
-    
-    returnMatrix
+// Perform gradient descent
+//let gradientDescent (y:Matrix<float>) (X:Matrix<float>) (theta:Matrix<float>)
+//                    (lambda: float)   (alpha: float)    (iterations: int) =         
+//    let mutable returnMatrix = Matrix.Build.Dense(1, 3, 0.0)
+//    let place (n: int) = 
+//        match n with 
+//        | 0 -> returnMatrix.Add(descent y X theta alpha)
+//        | _ -> returnMatrix.Add(descent y X (Matrix.Build.DenseOfColumnVectors (returnMatrix.Row((n-1)))) alpha)
+//    let placeHolder = Array.init iterations (fun n -> n + 1) |> Array.map (fun i -> place i)
+//    returnMatrix
 
-//    let i = (Array2D.zeroCreate<float> iterations 3)
-//    let init_gradient =  Matrix.Build.DenseOfArray i
-//    init_gradient |> Matrix.(fun t -> Some(t, descent y X t alpha))
 
+// Not sure how this function is used right now
 let costFunction (y:Matrix<float>) (X:Matrix<float>) (theta:Matrix<float>) (alpha: float) = 
     let t1f = computeCost y X theta alpha
     let t2f = descent y X theta alpha
     (t1f, t2f)
-
-let rec fixedPoint f x =
-    let f_x = f x
-    if f_x = x then x else fixedPoint f f_x;
         
 // ********************************
 // VARIABLES
@@ -102,17 +97,15 @@ let g, theta_final = costFunction y X theta alpha
 
 let rr = gradientDescent X y theta lambda alpha iterations
 
-let mutable returnMatrix = Matrix.Build.Dense(3, 1, 0.0)
-//let oo = (descent y X theta alpha)
-//let p = (descent y X theta alpha)
-//returnMatrix.Append(oo)
-//returnMatrix.Append(p)
 
-let place (n: int) = 
-    match n with 
-    | 0 -> returnMatrix.Append(descent y X theta alpha)
-    | _ -> returnMatrix.Append(descent y X (Matrix.Build.DenseOfRowVectors (returnMatrix.Column((n-1)))) alpha)
-    
-let placeHolder = Array.init iterations (fun n -> n + 1) |> Array.map (fun i -> place i)
-    
-returnMatrix
+// Testing a tail recursive gradient descent
+let rm = Matrix.Build.Dense(3, X.RowCount, 0.0)
+
+let rec recGradientDescent (count: int) (gradAccum:Matrix<float>) = 
+    if count = 0 then
+        recGradientDescent (count+1) (gradAccum.Append(descent y X theta alpha)) 
+    elif count <= X.RowCount then
+        let prevTheta = Matrix.Build.DenseOfColumnVectors(gradAccum.Column(count-1))
+        recGradientDescent (count+1) (gradAccum.Append(descent y X prevTheta alpha))       
+    else 
+        gradAccum
