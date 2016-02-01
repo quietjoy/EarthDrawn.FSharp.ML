@@ -8,7 +8,6 @@
 open System
 open FSharp.Data
 open MathNet.Numerics.LinearAlgebra
-open DotNumerics
 
 // TODO
 // Implement Gradient descent
@@ -95,8 +94,7 @@ let iterations = 100
 
 let g, theta_final = costFunction y X theta alpha
 
-let rr = gradientDescent X y theta lambda alpha iterations
-
+//let rr = gradientDescent X y theta lambda alpha iterations
 
 // Testing a tail recursive gradient descent
 let rm = Matrix.Build.Dense(3, X.RowCount, 0.0)
