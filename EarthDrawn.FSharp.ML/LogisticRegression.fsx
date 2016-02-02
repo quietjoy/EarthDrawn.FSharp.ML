@@ -90,15 +90,30 @@ let theta = Matrix.Build.Dense(X.ColumnCount, 1, 0.0)
 
 let gg = [|0.0, 0.0, 0.0|]
 
-let lambda = 1.0
-let alpha = 0.01 
+
 let iterations = 100
 
-let g, theta_final = costFunction y X theta alpha
+// let g, theta_final = costFunction y X theta alpha
 
 // ********************************
 // USING MODULE AND TYPE
 // ********************************
-let path = @"C:\Users\andre\Source\OSS\EarthDrawn.FSharp.ML\TestingData\LogisitcRegression\ex2data1.csv"
+let lambda = 1.0
+let alpha = 0.1 
+let path = @"C:\Users\andre\Source\OSS\EarthDrawn.FSharp.ML\TestingData\LogisitcRegression\Skin_NonSkinSample.csv"
 let logisiticReg = LogisticRegression.LogReg(path, alpha, lambda, 100)
+
+let grads = logisiticReg.gradients
+let costs = logisiticReg.costs |> Seq.toArray
+let xx = logisiticReg.X
+let yy = logisiticReg.y
+
+let costArray = grads.EnumerateColumns() 
+                        |> Seq.map(fun x -> logisiticReg.calculateCost x)
+                        |> Seq.map (fun x -> [| x |])
+                        |> Seq.toArray
+
+
+let arrayOfArrays = [| [| 1.0; 0.0 |]; [|0.0; 1.0 |] |]
+let twoDimensionalArray = Array2D.init 2 2 (fun i j -> arrayOfArrays.[i].[j]) 
  

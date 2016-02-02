@@ -43,12 +43,18 @@ module LogisticRegression =
 
         // GRADIENT DESCENT
 
-        // Perform ones step of gradient descent        
+        // Perform ones step of gradient descent 
+        // START HERE 2/3       
         member this.descent (theta:Matrix<float>) =
-            let hx = (this.X*theta) |> Matrix.map(fun x -> this.sigmoid x)
-            let h = hx-this.y
-            let sum = this.X |> Matrix.mapRows (fun i row -> h.[i, 0]*row) |> Matrix.sumCols 
-            Matrix.Build.DenseOfColumnVectors (this.alpha*(1.0/this.m)*sum) 
+            printfn "%A" theta
+            let hx     = (this.X*theta) |> Matrix.map(fun x -> this.sigmoid x)
+            let h      = hx-this.y
+            let delt_J = (1.0/this.m)*(this.X 
+                                        |> Matrix.mapRows (fun i row -> h.[i, 0]*row) 
+                                        |> Matrix.sumCols
+                                        |> Matrix.Build.DenseOfRowVectors)
+            theta - delt_J.Transpose()
+            
 
         // Recursively applies descent function
         member this.gradientDescent (count: int) (gradAccum:Matrix<float>) = 
@@ -63,15 +69,25 @@ module LogisticRegression =
         // COST FUNCTION
 
         // Calculate cost associated with weights
+        // Not regularized yet
         member this.calculateCost (thetaV:Vector<float>): float = 
             let theta = Matrix.Build.DenseOfColumnVectors(thetaV)
-            let h = (this.X*theta) |> Matrix.map(fun x -> log(this.sigmoid x))
-            let h1 = (this.X*theta) |> Matrix.map(fun x -> log(1.0-(this.sigmoid x))) 
-            let sum = (-this.y.*h) - ((this.y |> Matrix.map (fun x -> x-1.0)).*h1) |> Matrix.sum
-            let J = (1.0/(float this.X.RowCount))*sum
-            let fl = J + (this.lambda/(2.0*this.m)) * (theta |> Matrix.sum)
-            fl
+            let h     = (this.X*theta) |> Matrix.map(fun x -> log(this.sigmoid x))
+            let h_1   = (this.X*theta) |> Matrix.map(fun x -> log(1.0-(this.sigmoid x))) 
+            let term1 = (this.y.*h)
+            let term2 = (this.y |> Matrix.map (fun y -> 1.0-y)).*h_1
+            let sum   = term1 + term2 |> Matrix.sum
+            -1.0/this.m*sum
+            //let J     = -1.0/m*sum
+            //J + (this.lambda/(2.0*this.m)) * (theta |> Matrix.sum)
+
 
         // Given an array of gradients, calculates the cost associated with each gradient
         member this.findCosts (gradients:Matrix<float>) = 
-            gradients.EnumerateColumns() |> Seq.map(fun x -> this.calculateCost x)
+            gradients.EnumerateColumns() 
+                        |> Seq.map(fun x -> this.calculateCost x)
+                        |> Seq.map (fun x -> [| x |])
+                        |> Seq.toArray
+//            let 2dCostArray = Array2D.init<float> 2 2 (fun i j -> costArray.[i].[j]) 
+//                        
+//            Matrix.Build.DenseOfArray c
