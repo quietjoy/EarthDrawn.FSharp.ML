@@ -12,6 +12,38 @@ open FSharp.Data
 open MathNet.Numerics.LinearAlgebra
 open EarthDrawn.FSharp.ML.Source
 
+
+// ********************************
+// USING MODULE AND TYPE
+// ********************************
+let lambda = 1.0
+let alpha = 1.0 
+let path = @"C:\Users\andre\Source\OSS\EarthDrawn.FSharp.ML\TestingData\LogisitcRegression\Skin_NonSkinSample.csv"
+let logisiticReg = LogisticRegression.LogReg(path, alpha, lambda, 100)
+
+let costs = logisiticReg.costs |> Seq.toArray
+
+let grads = logisiticReg.gradients |> Matrix.toArray2
+
+let xx = logisiticReg.X
+let yy = logisiticReg.y
+let y_i = yy.[1, 0]
+let costArray = grads.EnumerateColumns() 
+                        |> Seq.map(fun x -> logisiticReg.calculateCost x)
+                        |> Seq.map (fun x -> [| x |])
+                        |> Seq.toArray
+
+
+let arrayOfArrays = [| [| 1.0; 0.0 |]; [|0.0; 1.0 |] |]
+let twoDimensionalArray = Array2D.init 2 2 (fun i j -> arrayOfArrays.[i].[j]) 
+
+
+
+
+
+
+
+
 // TODO
 // Implement Gradient descent
 // Add Regularization
@@ -95,25 +127,5 @@ let iterations = 100
 
 // let g, theta_final = costFunction y X theta alpha
 
-// ********************************
-// USING MODULE AND TYPE
-// ********************************
-let lambda = 1.0
-let alpha = 0.1 
-let path = @"C:\Users\andre\Source\OSS\EarthDrawn.FSharp.ML\TestingData\LogisitcRegression\Skin_NonSkinSample.csv"
-let logisiticReg = LogisticRegression.LogReg(path, alpha, lambda, 100)
 
-let grads = logisiticReg.gradients
-let costs = logisiticReg.costs |> Seq.toArray
-let xx = logisiticReg.X
-let yy = logisiticReg.y
-
-let costArray = grads.EnumerateColumns() 
-                        |> Seq.map(fun x -> logisiticReg.calculateCost x)
-                        |> Seq.map (fun x -> [| x |])
-                        |> Seq.toArray
-
-
-let arrayOfArrays = [| [| 1.0; 0.0 |]; [|0.0; 1.0 |] |]
-let twoDimensionalArray = Array2D.init 2 2 (fun i j -> arrayOfArrays.[i].[j]) 
  
