@@ -17,32 +17,29 @@ open EarthDrawn.FSharp.ML.Source
 // USING MODULE AND TYPE
 // ********************************
 let lambda = 1.0
-let alpha = 1.0 
+let alpha = 0.01 
 let path = @"C:\Users\andre\Source\OSS\EarthDrawn.FSharp.ML\TestingData\LogisitcRegression\Skin_NonSkinSample.csv"
 let logisiticReg = LogisticRegression.LogReg(path, alpha, lambda, 100)
 
 let costs = logisiticReg.costs |> Seq.toArray
 
-let grads = logisiticReg.gradients |> Matrix.toArray2
+let fT = logisiticReg.finalTheta
+let test = matrix [[1.0; 170.0; 190.0; 247.0]]
+let r = test*fT
 
-let xx = logisiticReg.X
+
+
+let grads = logisiticReg.gradients |> Matrix.toColArrays
+let xx = logisiticReg.X 
 let yy = logisiticReg.y
-let y_i = yy.[1, 0]
-let costArray = grads.EnumerateColumns() 
-                        |> Seq.map(fun x -> logisiticReg.calculateCost x)
-                        |> Seq.map (fun x -> [| x |])
-                        |> Seq.toArray
+let theta = Matrix.Build.DenseOfColumnVectors(grads.Column(0))
+let hx    = logisiticReg.sigmoid (logisiticReg.X*theta)
+let h     = hx-yy
 
-
-let arrayOfArrays = [| [| 1.0; 0.0 |]; [|0.0; 1.0 |] |]
-let twoDimensionalArray = Array2D.init 2 2 (fun i j -> arrayOfArrays.[i].[j]) 
-
-
-
-
-
-
-
+let delt_J = xx
+                |> Matrix.mapRows (fun i row -> h.[i, 0]*row)
+                |> Matrix.sumCols
+                |> Matrix.Build.DenseOfRowVectors
 
 // TODO
 // Implement Gradient descent

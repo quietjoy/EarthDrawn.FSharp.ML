@@ -36,8 +36,9 @@ module LogisticRegression =
         member this.m = (float this.X.RowCount)
         
         // Perform Logisitc Regression using gradient descent
-        member this.gradients = this.gradientDescent 0 this.initialTheta
-        member this.costs = this.findCosts this.gradients
+        member this.gradients  = this.gradientDescent 0 this.initialTheta
+        member this.costs      = this.findCosts this.gradients
+        member this.finalTheta = Matrix.Build.DenseOfColumnVectors(this.gradients.Column(this.gradients.ColumnCount-1))
 
 
         member this.sigmoid (z: Matrix<float>) = 
@@ -47,23 +48,24 @@ module LogisticRegression =
 
         // Perform ones step of gradient descent 
         member this.descent (theta:Matrix<float>) =
-            let hx     = this.sigmoid (this.X*theta)|> Matrix.map(fun x -> x)
-            let h      = hx-this.y
+            let hx     = this.sigmoid (this.X*theta)
+            let h      = hx-this.y 
             let delt_J = this.X 
-                            |> Matrix.mapRows (fun i row -> h.[i, 0]*row) 
+                            |> Matrix.mapRows (fun i row -> h.[i, 0]*row)
                             |> Matrix.sumCols
                             |> Matrix.Build.DenseOfRowVectors
-            theta - (this.alpha * delt_J.Transpose())
+            theta - ((1.0/this.m) * (this.alpha * delt_J.Transpose()))
+            
             
 
         // Recursively applies descent function
-        member this.gradientDescent (count: int) (gradAccum:Matrix<float>) = 
+        member this.gradientDescent (count: int) (gradAccum:Matrix<float>) =
             if count = 0 then
                 this.gradientDescent (count+1) (gradAccum.Append(this.descent this.initialTheta)) 
-            elif count < (this.iterations - 1) then
+            elif count < this.iterations then
                 let prevTheta = Matrix.Build.DenseOfColumnVectors(gradAccum.Column(count-1))
-                this.gradientDescent (count+1) (gradAccum.Append(this.descent prevTheta))       
-            else 
+                this.gradientDescent (count+1) (gradAccum.Append(this.descent prevTheta))
+            else
                 gradAccum
 
         // COST FUNCTION
@@ -86,6 +88,8 @@ module LogisticRegression =
                         |> Seq.map(fun x -> this.calculateCost x)
                         |> Seq.map (fun x -> [| x |])
                         |> Seq.toArray
-//            let 2dCostArray = Array2D.init<float> 2 2 (fun i j -> costArray.[i].[j]) 
-//                        
-//            Matrix.Build.DenseOfArray c
+
+        member this.predict (testSet: Matrix<float>) =
+            let htTheta = this.sigmoid(testSet*this.finalTheta)
+            htTheta.[0, 0] >= 0.5
+            
