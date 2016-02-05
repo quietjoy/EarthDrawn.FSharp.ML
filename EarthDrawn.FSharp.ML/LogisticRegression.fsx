@@ -27,7 +27,7 @@ let fT = logisiticReg.finalTheta
 let test = matrix [[1.0; 170.0; 190.0; 247.0]]
 let r = test*fT
 
-
+// 2/5 - Auto split data 60% train, 20% c.v., 20% test
 
 let grads = logisiticReg.gradients |> Matrix.toColArrays
 let xx = logisiticReg.X 
