@@ -46,10 +46,11 @@ module LogisticRegression =
         member this.m = (float this.X_train.RowCount)
         
         // Perform Logisitc Regression using gradient descent
-        member this.gradients  = this.gradientDescent 0 this.initialTheta
-        member this.costs      = this.findCosts this.gradients
-        member this.finalTheta = Matrix.Build.DenseOfColumnVectors(this.gradients.Column(this.gradients.ColumnCount-1))
-
+        member this.gradients   = this.gradientDescent 0 this.initialTheta
+        member this.costs       = this.findCosts this.gradients
+        member this.finalTheta  = Matrix.Build.DenseOfColumnVectors(this.gradients.Column(this.gradients.ColumnCount-1))
+        member this.predictions = this.predict this.X_test 
+        member this.error       = this.calculateError this.predictions this.y_test
 
         // sigmoid
         member this.sigmoid (z: Matrix<float>) = 
@@ -105,7 +106,13 @@ module LogisticRegression =
                                             | x when x >= 0.5 -> 1.0
                                             | _ -> 0.0) 
         
-        
+        member this.calculateError (predictions:Matrix<float>) (y: Matrix<float>): float =
+            let compare = predictions-y
+            let correctPredictions = compare 
+                                        |> Matrix.toSeq 
+                                        |> Seq.filter (fun x -> x = 0.0)
+                                        |> Seq.toList
+            float (correctPredictions.Length / y.RowCount)
 
         // Take in the size of the rawData matrix and return a list of tuples that represent
         // 1. indicies of training data (60%) - position 0
