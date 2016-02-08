@@ -55,6 +55,7 @@
     <None Include="Script.fsx" />
     <Content Include="packages.config" />
     <Compile Include="LogisticRegression.fs" />
+    <Compile Include="Common.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FSharp.Core">

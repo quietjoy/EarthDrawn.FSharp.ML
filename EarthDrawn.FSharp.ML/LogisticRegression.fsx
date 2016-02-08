@@ -5,42 +5,37 @@
 
 #load "..\packages\MathNet.Numerics.FSharp.3.10.0\MathNet.Numerics.fsx"
 #load @"C:\Users\andre\Source\OSS\EarthDrawn.FSharp.ML\EarthDrawn.FSharp.ML.Source\LogisticRegression.fs"
-
+#load @"C:\Users\andre\Source\OSS\EarthDrawn.FSharp.ML\EarthDrawn.FSharp.ML.Source\Common.fs"
 
 open System
 open FSharp.Data
 open MathNet.Numerics.LinearAlgebra
 open EarthDrawn.FSharp.ML.Source
+open Common
 
 
 // ********************************
 // USING MODULE AND TYPE
 // ********************************
+let path = @"C:\Users\andre\Source\OSS\EarthDrawn.FSharp.ML\TestingData\LogisitcRegression\Skin_NonSkinSample.csv"
+
+let raw = Common.readData path
 let lambda = 1.0
 let alpha = 0.01 
-let path = @"C:\Users\andre\Source\OSS\EarthDrawn.FSharp.ML\TestingData\LogisitcRegression\Skin_NonSkinSample.csv"
-let logisiticReg = LogisticRegression.LogReg(path, alpha, lambda, 100)
+let logisiticReg = LogisticRegression.LogReg(path, alpha, lambda, 100, raw)
 
-let x_train = logisiticReg.rawData
+
 let costs = logisiticReg.costs |> Seq.toArray
+
+let indicies = logisiticReg.indices
+let last = logisiticReg.features
+let x_train = logisiticReg.X_train
+let y_train = logisiticReg.y_train
+let x_cv = logisiticReg.X_cv
 
 let fT = logisiticReg.finalTheta
 let test = matrix [[1.0; 170.0; 190.0; 247.0]]
 let r = test*fT
-
-// 2/5 - Auto split data 60% train, 20% c.v., 20% test
-
-let grads = logisiticReg.gradients |> Matrix.toColArrays
-let xx = logisiticReg.X 
-let yy = logisiticReg.y
-let theta = Matrix.Build.DenseOfColumnVectors(grads.Column(0))
-let hx    = logisiticReg.sigmoid (logisiticReg.X*theta)
-let h     = hx-yy
-
-let delt_J = xx
-                |> Matrix.mapRows (fun i row -> h.[i, 0]*row)
-                |> Matrix.sumCols
-                |> Matrix.Build.DenseOfRowVectors
 
 // TODO
 // Implement Gradient descent
