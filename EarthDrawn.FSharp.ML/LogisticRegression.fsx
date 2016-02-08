@@ -21,6 +21,7 @@ let alpha = 0.01
 let path = @"C:\Users\andre\Source\OSS\EarthDrawn.FSharp.ML\TestingData\LogisitcRegression\Skin_NonSkinSample.csv"
 let logisiticReg = LogisticRegression.LogReg(path, alpha, lambda, 100)
 
+let x_train = logisiticReg.rawData
 let costs = logisiticReg.costs |> Seq.toArray
 
 let fT = logisiticReg.finalTheta

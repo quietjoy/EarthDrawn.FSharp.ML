@@ -14,14 +14,28 @@ module LogisticRegression =
     let castToFloatList (x : string []): List<float> = 
         x |> Seq.map (fun s -> float s) |> Seq.toList
 
-    // Read in csv and return a Matrix
+    let rng = new Random()
+    let shuffle (arr : 'a array) =
+        let array = Array.copy arr
+        let n = array.Length
+        for x in 1..n do
+            let i = n-x
+            let j = rng.Next(i+1)
+            let tmp = array.[i]
+            array.[i] <- array.[j]
+            array.[j] <- tmp
+        array |> Array.toList
+
+    // Read in csv and return a shuffled Matrix of the data
     let readData (path : string): Matrix<float> = 
         let csv = CsvFile.Load(path)
         let f2d = csv.Rows 
                         |> Seq.map (fun x -> x.Columns) 
                         |> Seq.map (fun x -> castToFloatList x)
-                        |> Seq.toList
+                        |> Seq.toArray
+                        |> shuffle
         matrix f2d
+
 
     type LogReg (path: string, a0: float, l0: float, it: int) =
         // From constructor
@@ -105,7 +119,7 @@ module LogisticRegression =
         member this.predict (testSet: Matrix<float>) =
             let htTheta = this.sigmoid(testSet*this.finalTheta)
             htTheta.[0, 0] >= 0.5
-        
+
         // Generate training data 
         member this.generateFeatureMatrix (data: Matrix<float>): (Matrix<float>) = 
             Matrix.Build
@@ -115,19 +129,3 @@ module LogisticRegression =
         member this.generateClassificationMatrix (data: Matrix<float>): (Matrix<float>) = 
             Matrix.Build
                     .DenseOfColumnVectors(data.Column(data.ColumnCount-1))
-        
-            
-        // Generating train, cross validation and testing data
-//        member this.generateShuffleMatrix (x:Matrix<float>) = 
-//            let rng = new Random()
-//            let shuffle (mat : 'a Matrix) =
-//                let array = Matrix.Build.DenseOfMatrix mat
-//                let n = array.RowCount
-//                for x in 1..n do
-//                    let i = n-x
-//                    let j = rng.Next(i+1)
-//                    let tmp = array.[i]
-//                    array.[i] <- array.[j]
-//                    array.[j] <- tmp
-//                array
-//            shuffle ()
