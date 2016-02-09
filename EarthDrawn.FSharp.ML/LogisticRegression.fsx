@@ -13,7 +13,6 @@ open MathNet.Numerics.LinearAlgebra
 open EarthDrawn.FSharp.ML.Source
 open Common
 
-
 // ********************************
 // USING MODULE AND TYPE
 // ********************************
@@ -24,107 +23,21 @@ let lambda = 1.0
 let alpha = 0.01 
 let logisiticReg = LogisticRegression.LogReg(alpha, lambda, 100, raw)
 
-// NOT WORKING - START HERE 2/9
 let error = logisiticReg.error
 
-let costs = logisiticReg.costs 
+let costs = logisiticReg.costs |> Matrix.toArray2
+let grads = logisiticReg.gradients |> Matrix.toColArrays
 
-let indicies = logisiticReg.indices
-let last = logisiticReg.features
-let x_train = logisiticReg.X_train
-let y_train = logisiticReg.y_train
-let x_cv = logisiticReg.X_cv
-let x_test = logisiticReg.X_test
+// replicating calculate cost
+let theta = Matrix.Build.DenseOfColumnVectors(logisiticReg.gradients.Column(3))
+let m     = (float logisiticReg.X_train.RowCount) 
+//let hx    = logisiticReg.sigmoid (logisiticReg.X_train*theta)
 
-let ff = logisiticReg.features.SubMatrix(120, (160-120), 0, 4)
-logisiticReg.features.RowCount
-200.0 * 0.2
-let fT = logisiticReg.finalTheta
-let test = matrix [[1.0; 170.0; 190.0; 247.0]]
-let r = test*fT
+logisiticReg.y_train |> Matrix.mapi(fun i j y_i -> (float i))
 
-// TODO
-// Implement Gradient descent
-// Add Regularization
-
-// ********************************    
-// BUILDING MATRICIES
-// ********************************
-
-// Turn the array of string[] to an array of float[]
-// TODO: Take into account cultural differences of floats
-let castToFloatList (x : string []) = 
-    x |> Seq.map (fun s -> float s) |> Seq.toList
-
-// Read in csv and return a Matrix
-let readData (path : string) = 
-    let csv = CsvFile.Load(path)
-    let f2d = csv.Rows 
-                |> Seq.map (fun x -> x.Columns) 
-                |> Seq.map (fun x -> castToFloatList x)
-                |> Seq.toList
-    matrix f2d
-
-
-// ********************************
-// MAIN LOGISTIC REGRESSION ALGORITHM
-// ********************************
-
-// Compute the sigmoid function
-let sigmoid z = 1.0 / (1.0 + exp -z)
-
-// Calculate the regularized cost associated with a the proposed weights (theta)
-let computeCost (y:Matrix<float>) (X:Matrix<float>) (theta:Matrix<float>) (lambda: float) = 
-    let m = (float X.RowCount)
-    let h = (X*theta) |> Matrix.map(fun x -> log(sigmoid x))
-    let h1 = (X*theta) |> Matrix.map(fun x -> log(1.0-sigmoid x)) 
-    let sum = (-y.*h) - ((y |> Matrix.map (fun x -> x-1.0)).*h1) |> Matrix.sum
-    let J = (1.0/(float X.RowCount))*sum
-    J + (lambda/(2.0*m))*(theta |> Matrix.sum)
-
-// One step of gradient descent
-let descent (y:Matrix<float>) (X:Matrix<float>) (theta:Matrix<float>) (alpha: float) =
-    let m = (float X.RowCount)
-    let hx = (X*theta) |> Matrix.map(fun x -> sigmoid x)
-    let h = hx-y
-    let sum = X |> Matrix.mapRows (fun i row -> h.[i, 0]*row) |> Matrix.sumCols 
-    Matrix.Build.DenseOfColumnVectors (alpha*(1.0/m)*sum) 
-//    (alpha*(1.0/m)*sum)
-
-// Tail recursive gradient descent
-//let rec gradientDescent (count: int) (gradAccum:Matrix<float>) = 
-//    if count = 0 then
-//        gradientDescent (count+1) (gradAccum.Append(descent y X theta alpha)) 
-//    elif count <= X.RowCount then
-//        let prevTheta = Matrix.Build.DenseOfColumnVectors(gradAccum.Column(count-1))
-//        gradientDescent (count+1) (gradAccum.Append(descent y X prevTheta alpha))       
-//    else 
-//        gradAccum
-
-
-// Not sure how this function is used right now
-let costFunction (y:Matrix<float>) (X:Matrix<float>) (theta:Matrix<float>) (alpha: float) = 
-    let t1f = computeCost y X theta alpha
-    let t2f = descent y X theta alpha
-    (t1f, t2f)
-        
-// ********************************
-// VARIABLES
-// ********************************
-let data = 
-    readData @"C:\Users\andre\Source\OSS\EarthDrawn.FSharp.ML\TestingData\LogisitcRegression\ex2data1.csv"
-
-let X = Matrix.Build.Dense(data.RowCount, 1, 1.0)
-                .Append(data.RemoveColumn(data.ColumnCount-1))
-let y = Matrix.Build.DenseOfColumnVectors(data.Column(data.ColumnCount-1))
-let theta = Matrix.Build.Dense(X.ColumnCount, 1, 0.0)
-
-let gg = [|0.0, 0.0, 0.0|]
-
-
-let iterations = 100
-
-// let g, theta_final = costFunction y X theta alpha
-
+let hx     = logisiticReg.sigmoid (logisiticReg.X_train*theta)
+let h      = hx-logisiticReg.y_train 
+h.[1,0]
+let delt_J = logisiticReg.X_train |> Matrix.mapRows (fun i row -> h.[i, 0]*row)
 
  

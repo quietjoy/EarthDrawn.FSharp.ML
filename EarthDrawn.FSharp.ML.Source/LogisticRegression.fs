@@ -57,7 +57,7 @@ module LogisticRegression =
                             |> Matrix.mapRows (fun i row -> h.[i, 0]*row)
                             |> Matrix.sumCols
                             |> Matrix.Build.DenseOfRowVectors
-            theta - ((1.0/m) * (α * delt_J.Transpose()))
+            theta - (α * delt_J.Transpose())
 
         // Recursively applies descent function
         member this.gradientDescent (count: int) (gradAccum:Matrix<float>) =
@@ -77,15 +77,15 @@ module LogisticRegression =
             let m     = (float this.X_train.RowCount) 
             let theta = Matrix.Build.DenseOfColumnVectors(thetaV)
             let hx    = this.sigmoid (this.X_train*theta)
-            let costs = this.y_train 
+            let costs = this.y_train
                             |> Matrix.mapi (fun i j y_i -> match y_i with
-                                                            | 1.0 -> hx.[i, 0]
-                                                            | _ -> hx.[i, 0])
+                                                            | 1.0 -> log(hx.[i, 0])
+                                                            | _   -> log(1.0-hx.[i, 0]))
                             |> Matrix.sum
             [(-1.0/m*costs)]
 
         // Given an array of gradients, calculates the cost associated with each gradient
-        member this.findCosts (gradients:Matrix<float>) = 
+        member this.findCosts (gradients:Matrix<float>): Matrix<float> = 
             let costs = gradients.EnumerateColumns() 
                             |> Seq.map (fun x -> this.calculateCost x)
                             |> Seq.toList
