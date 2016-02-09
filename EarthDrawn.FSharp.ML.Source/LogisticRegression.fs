@@ -107,6 +107,8 @@ module LogisticRegression =
                                             | _ -> 0.0) 
         
         member this.calculateError (predictions:Matrix<float>) (y: Matrix<float>): float =
+            printfn "%A" predictions
+            printfn "%A" y
             let compare = predictions-y
             let correctPredictions = compare 
                                         |> Matrix.toSeq 
@@ -122,11 +124,12 @@ module LogisticRegression =
             let trainIndex =  int (floor ((float size)*0.6))
             let cvIndex = trainIndex + (int (floor ((float size)*0.2)))
             // Anything left over gets put in the testing data
-            [(0, (trainIndex-1)); (trainIndex, (cvIndex-1)); (cvIndex, (size-1))]
+            [(0, trainIndex); (trainIndex, cvIndex); (cvIndex, size)]
 
         // Generate subset of feature matrix
-        member this.getSubSetOfMatrix (data: Matrix<float>) (indicies: int * int): (Matrix<float>) = 
-            data.SubMatrix((fst indicies), (snd indicies), 0, data.ColumnCount)
+        member this.getSubSetOfMatrix (data: Matrix<float>) (indicies: int * int): (Matrix<float>) =
+            let rowCount = (snd indicies) - (fst indicies)
+            data.SubMatrix((fst indicies), rowCount, 0, data.ColumnCount)
                     
 
         member this.generateClassificationMatrix (data: Matrix<float>): (Matrix<float>) = 

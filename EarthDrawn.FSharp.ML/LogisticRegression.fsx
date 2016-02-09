@@ -34,7 +34,11 @@ let last = logisiticReg.features
 let x_train = logisiticReg.X_train
 let y_train = logisiticReg.y_train
 let x_cv = logisiticReg.X_cv
+let x_test = logisiticReg.X_test
 
+let ff = logisiticReg.features.SubMatrix(120, (160-120), 0, 4)
+logisiticReg.features.RowCount
+200.0 * 0.2
 let fT = logisiticReg.finalTheta
 let test = matrix [[1.0; 170.0; 190.0; 247.0]]
 let r = test*fT
