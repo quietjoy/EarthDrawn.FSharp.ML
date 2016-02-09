@@ -73,7 +73,7 @@ module LogisticRegression =
         // COST FUNCTION
         // Calculate cost associated with weights
         // Not regularized yet
-        member this.calculateCost (thetaV:Vector<float>): float =
+        member this.calculateCost (thetaV:Vector<float>): List<float> =
             let m     = (float this.X_train.RowCount) 
             let theta = Matrix.Build.DenseOfColumnVectors(thetaV)
             let hx    = this.sigmoid (this.X_train*theta)
@@ -82,14 +82,14 @@ module LogisticRegression =
                                                             | 1.0 -> hx.[i, 0]
                                                             | _ -> hx.[i, 0])
                             |> Matrix.sum
-            -1.0/m*costs
+            [(-1.0/m*costs)]
 
         // Given an array of gradients, calculates the cost associated with each gradient
         member this.findCosts (gradients:Matrix<float>) = 
-            gradients.EnumerateColumns() 
-                        |> Seq.map (fun x -> this.calculateCost x)
-                        |> Seq.map (fun x -> [| x |])
-                        |> Seq.toArray
+            let costs = gradients.EnumerateColumns() 
+                            |> Seq.map (fun x -> this.calculateCost x)
+                            |> Seq.toList
+            matrix costs
 
         // Take in the size of the rawData matrix and return a list of tuples that represent
         // 1. indicies of training data (60%) - position 0

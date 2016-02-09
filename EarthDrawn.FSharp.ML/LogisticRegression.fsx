@@ -27,7 +27,7 @@ let logisiticReg = LogisticRegression.LogReg(alpha, lambda, 100, raw)
 // NOT WORKING - START HERE 2/9
 let error = logisiticReg.error
 
-let costs = logisiticReg.costs |> Seq.toArray
+let costs = logisiticReg.costs 
 
 let indicies = logisiticReg.indices
 let last = logisiticReg.features
