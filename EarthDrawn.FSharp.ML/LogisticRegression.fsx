@@ -20,7 +20,7 @@ let path = @"C:\Users\andre\Source\OSS\EarthDrawn.FSharp.ML\TestingData\Logisitc
 
 let raw = Common.readData path
 let lambda = 1.0
-let alpha = 0.01 
+let alpha = 0.1 
 let logisiticReg = LogisticRegression.LogReg(alpha, lambda, 100, raw)
 
 let error = logisiticReg.error

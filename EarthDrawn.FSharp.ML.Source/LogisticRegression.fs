@@ -61,14 +61,15 @@ module LogisticRegression =
 
         // Recursively applies descent function
         member this.gradientDescent (count: int) (gradAccum:Matrix<float>) =
+            printfn "%A" gradAccum
             if count = 0 then
                 this.gradientDescent (count+1) (gradAccum.Append(this.descent this.initialTheta)) 
             elif count < iterations then
-                let prevTheta = Matrix.Build.DenseOfColumnVectors(gradAccum.Column(count-1))
+                let prevTheta = Matrix.Build.DenseOfColumnVectors(gradAccum.Column(count))
+                printfn "%A" prevTheta
                 this.gradientDescent (count+1) (gradAccum.Append(this.descent prevTheta))
             else
                 gradAccum
-
 
         // COST FUNCTION
         // Calculate cost associated with weights
