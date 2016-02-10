@@ -38,9 +38,7 @@ let error = logisiticReg.error
 //                                                                      | x when x = infinity -> 10000.0
 //                                                                      | _ -> x)
 
-let costs = logisiticReg.costs |> Matrix.toSeq |> Seq.filter (fun x -> x <> infinity)
-
-Chart.Line(costs,Name="Cost")
+let costs = logisiticReg.costPlot
 
 let grads = logisiticReg.gradients |> Matrix.toSeq
 
@@ -59,6 +57,8 @@ let firstFiftyThousandFeatures = logisiticReg.getSubSetOfMatrix allFeatures (0, 
 let firstfiftyThousandClassifiers = logisiticReg.getSubSetOfMatrix allClassifiers (0, 50000)
 let allPredict = logisiticReg.predict firstFiftyThousandFeatures
 let fiftyThousandError = logisiticReg.calculateError allPredict firstfiftyThousandClassifiers
+
+let htTheta = logisiticReg.sigmoid(firstFiftyThousandFeatures*logisiticReg.finalTheta)
 
 
 // ********************************

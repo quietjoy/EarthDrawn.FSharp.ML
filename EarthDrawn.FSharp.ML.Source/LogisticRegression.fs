@@ -4,6 +4,8 @@ module LogisticRegression =
     open System
     open MathNet.Numerics.LinearAlgebra
     open MathNet.Numerics.LinearAlgebra.Double
+    open System.Drawing
+    open FSharp.Charting
 
     type LogReg (α: float, λ: float, iterations: int, rawData: Matrix<float>) =
         // features
@@ -34,6 +36,7 @@ module LogisticRegression =
         // Perform Logisitc Regression using gradient descent
         member this.gradients   = this.gradientDescent 0 this.initialTheta
         member this.costs       = this.findCosts this.gradients
+        member this.costPlot    = this.generateCostPlot
         member this.finalTheta  = Matrix.Build.DenseOfColumnVectors(this.gradients.Column(this.gradients.ColumnCount-1))
         
         // Use testing data to get error 
@@ -96,6 +99,13 @@ module LogisticRegression =
                             |> Seq.toList
             matrix costs
 
+
+        // cost plot - filter out infinities for now
+        member this.generateCostPlot = 
+            let costs = this.costs |> Matrix.toSeq |> Seq.filter (fun x -> x <> infinity)
+            Chart.Line(costs,Name="Cost")
+
+
         // Take in the size of the rawData matrix and return a list of tuples that represent
         // 1. indicies of training data (60%) - position 0
         // 2. indicies of c.v. data (20%)     - position 1
@@ -117,6 +127,7 @@ module LogisticRegression =
                                             | x when x >= 0.5 -> 1.0
                                             | _ -> 0.0) 
         
+        // Calculate error by comparing predictions and actual values
         member this.calculateError (predictions:Matrix<float>) (y: Matrix<float>): float =
             let compare = predictions-y
             let incorrentPredictions = compare 
@@ -124,3 +135,7 @@ module LogisticRegression =
                                         |> Seq.filter (fun x -> x <> 0.0)
                                         |> Seq.toList
             float (incorrentPredictions.Length / y.RowCount)
+
+        // 2/11 - START HERE
+        // F-score
+
