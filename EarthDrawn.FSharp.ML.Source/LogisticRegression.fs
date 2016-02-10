@@ -6,18 +6,15 @@ module LogisticRegression =
     open MathNet.Numerics.LinearAlgebra.Double
 
     type LogReg (α: float, λ: float, iterations: int, rawData: Matrix<float>) =
-        // all features
-        member this.features = Matrix.Build
-                                .Dense(rawData.RowCount, 1, 1.0)
-                                .Append(rawData.RemoveColumn(rawData.ColumnCount-1))
+        // features
+        member this.features = this.createFeatureMatrix rawData
 
-        // all classifications
-        member this.classifications = Matrix.Build
-                                        .DenseOfColumnVectors(rawData.Column(rawData.ColumnCount-1))
+        // classifications
+        member this.classifications = this.createClassificationMatrix rawData
 
         // get a list of tuples (int * int) that represent the indicies of the 
         // train, cross validation and testing data
-        member this.indices = this.getIndicies rawData.RowCount
+        member this.indices = this.getIndicies rawData.RowCount 
 
         // Build training data
         member this.X_train = this.getSubSetOfMatrix this.features (this.indices.[0])
@@ -47,6 +44,15 @@ module LogisticRegression =
         member this.sigmoid (z: Matrix<float>) = 
                z |> Matrix.map (fun x -> 1.0 / (1.0 + (exp -x)))
         
+        // Create feature matrix
+        member this.createFeatureMatrix (data:Matrix<float>) = 
+            Matrix.Build.Dense(data.RowCount, 1, 1.0)
+                        .Append(data.RemoveColumn(rawData.ColumnCount-1))
+
+        // create classification matrix
+        member this.createClassificationMatrix (data:Matrix<float>) =
+            Matrix.Build.DenseOfColumnVectors(data.Column(data.ColumnCount-1))
+
         // GRADIENT DESCENT
         // Perform ones step of gradient descent 
         member this.descent (theta:Matrix<float>) =
@@ -57,16 +63,14 @@ module LogisticRegression =
                             |> Matrix.mapRows (fun i row -> h.[i, 0]*row)
                             |> Matrix.sumCols
                             |> Matrix.Build.DenseOfRowVectors
-            theta - (α * delt_J.Transpose())
+            theta - α*((1.0/m) * delt_J.Transpose())
 
         // Recursively applies descent function
         member this.gradientDescent (count: int) (gradAccum:Matrix<float>) =
-            printfn "%A" gradAccum
             if count = 0 then
                 this.gradientDescent (count+1) (gradAccum.Append(this.descent this.initialTheta)) 
             elif count < iterations then
                 let prevTheta = Matrix.Build.DenseOfColumnVectors(gradAccum.Column(count))
-                printfn "%A" prevTheta
                 this.gradientDescent (count+1) (gradAccum.Append(this.descent prevTheta))
             else
                 gradAccum
