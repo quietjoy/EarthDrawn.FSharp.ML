@@ -27,18 +27,14 @@ let lambda = 1.0
 let alpha = 0.01 
 let logisiticReg = LogisticRegression.LogReg(alpha, lambda, 100, raw)
 
-let error = logisiticReg.error
 
 // ********************************
 // ********************************
 // Charting
 // ********************************
 // ********************************
-//let costs = logisiticReg.costs |> Matrix.toSeq |> Seq.map(fun x -> match x with 
-//                                                                      | x when x = infinity -> 10000.0
-//                                                                      | _ -> x)
-
-let costs = logisiticReg.costPlot
+let costPlot = logisiticReg.costPlot
+let error = logisiticReg.error
 
 let grads = logisiticReg.gradients |> Matrix.toSeq
 
@@ -88,14 +84,14 @@ let htTheta = logisiticReg.sigmoid(firstFiftyThousandFeatures*logisiticReg.final
 // Cost
 // ********************************
 // ********************************
-//let theta = Matrix.Build.DenseOfColumnVectors(logisiticReg.gradients.Column(2))
-//let m     = (float logisiticReg.X_train.RowCount) 
-//let hx    = logisiticReg.sigmoid (logisiticReg.X_train*theta)
-//
-//let costs = logisiticReg.y_train
-//                            |> Matrix.mapi (fun i j y_i -> match y_i with
-//                                                            | 1.0 -> log(hx.[i, 0])
-//                                                            | _   -> log(1.0-hx.[i, 0]))
-//                            |> Matrix.sum
-//
-// 
+let theta = Matrix.Build.DenseOfColumnVectors(logisiticReg.gradients.Column(2))
+let m     = (float logisiticReg.X_train.RowCount) 
+let hx    = logisiticReg.sigmoid (logisiticReg.X_train*theta)
+
+let costs = logisiticReg.y_train
+                            |> Matrix.mapi (fun i j y_i -> match y_i with
+                                                            | 1.0 -> log(hx.[i, 0])
+                                                            | _   -> log(1.0-hx.[i, 0]))
+                            |> Matrix.sum
+
+ 

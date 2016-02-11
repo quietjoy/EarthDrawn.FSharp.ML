@@ -5,6 +5,8 @@ module LogisticRegression =
     open MathNet.Numerics.LinearAlgebra
     open MathNet.Numerics.LinearAlgebra.Double
     open System.Drawing
+    open System.Windows.Forms
+    open System.Windows.Forms.DataVisualization
     open FSharp.Charting
 
     type LogReg (α: float, λ: float, iterations: int, rawData: Matrix<float>) =
@@ -30,7 +32,7 @@ module LogisticRegression =
         member this.X_test = this.getSubSetOfMatrix this.features (this.indices.[2])
         member this.y_test = this.getSubSetOfMatrix this.classifications (this.indices.[2])
         
-        // initilize theta 
+        // initilize theta
         member this.initialTheta = Matrix.Build.Dense(this.X_train.ColumnCount, 1, 0.0)
         
         // Perform Logisitc Regression using gradient descent
@@ -85,12 +87,12 @@ module LogisticRegression =
             let m     = (float this.X_train.RowCount) 
             let theta = Matrix.Build.DenseOfColumnVectors(thetaV)
             let hx    = this.sigmoid (this.X_train*theta)
-            let costs = this.y_train
+            let sum = this.y_train
                             |> Matrix.mapi (fun i j y_i -> match y_i with
                                                             | 1.0 -> log(hx.[i, 0])
                                                             | _   -> log(1.0-hx.[i, 0]))
                             |> Matrix.sum
-            [(-1.0/m*costs)]
+            [(-1.0/m*sum)]
 
         // Given an array of gradients, calculates the cost associated with each gradient
         member this.findCosts (gradients:Matrix<float>): Matrix<float> = 
@@ -100,10 +102,14 @@ module LogisticRegression =
             matrix costs
 
 
-        // cost plot - filter out infinities for now
+        // cost plot
+        // filter out infinities for now
+        // TODO: Make title appear above graph
         member this.generateCostPlot = 
             let costs = this.costs |> Matrix.toSeq |> Seq.filter (fun x -> x <> infinity)
-            Chart.Line(costs,Name="Cost")
+            Chart.Line(costs, Name="Cost", Title="Cost Function")
+                .WithXAxis(Title="Iteration", Min=0.0, Max=(float iterations))
+                .WithYAxis(Title="Cost")
 
 
         // Take in the size of the rawData matrix and return a list of tuples that represent
@@ -121,7 +127,7 @@ module LogisticRegression =
             data.SubMatrix((fst indicies), rowCount, 0, data.ColumnCount)
 
         // Use trained thetas to perform classification
-        member this.predict (testSet: Matrix<float>) =
+        member this.predict (testSet: Matrix<float>): Matrix<float> =
             let htTheta = this.sigmoid(testSet*this.finalTheta)
             htTheta |> Matrix.map (fun x -> match x with 
                                             | x when x >= 0.5 -> 1.0
@@ -137,5 +143,22 @@ module LogisticRegression =
             float (incorrentPredictions.Length / y.RowCount)
 
         // 2/11 - START HERE
+
+        // precision
+        member this.precision: float =
+            let diffSeq  = (this.predictions - this.y_test) |> Matrix.toSeq 
+            let truePos  = (diffSeq |> Seq.filter (fun elem -> elem = 0.0) |> Seq.toList).Length
+            let falsePos = (diffSeq |> Seq.filter (fun elem -> elem = 1.0) |> Seq.toList).Length
+            (float (truePos / (truePos + falsePos)))
+
+        // recall
+        member this.recall: float = 
+            let diffSeq  = (this.predictions - this.y_test) |> Matrix.toSeq 
+            let truePos  = (diffSeq |> Seq.filter (fun elem -> elem = 0.0) |> Seq.toList).Length
+            let falseNeg = (diffSeq |> Seq.filter (fun elem -> elem = -1.0) |> Seq.toList).Length
+            (float (truePos / (truePos + falseNeg)))
+
         // F-score
+        member this.fScore = 
+            2.0*(this.precision*this.recall/(this.precision + this.recall)) 
 
