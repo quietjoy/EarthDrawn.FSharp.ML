@@ -16,7 +16,7 @@ module LogisticRegression =
         // classifications
         member this.classifications = this.createClassificationMatrix rawData
 
-        // get a list of tuples (int * int) that represent the indicies of the 
+        // list of tuples (int * int) that are the indicies of the 
         // train, cross validation and testing data
         member this.indices = this.getIndicies rawData.RowCount 
 
@@ -140,7 +140,7 @@ module LogisticRegression =
                                         |> Matrix.toSeq 
                                         |> Seq.filter (fun x -> x <> 0.0)
                                         |> Seq.toList
-            float (incorrentPredictions.Length / y.RowCount)
+            ((float incorrentPredictions.Length) / (float logisiticReg.y_test.RowCount))
 
         // 2/11 - START HERE
 
