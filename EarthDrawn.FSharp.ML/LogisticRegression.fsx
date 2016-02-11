@@ -26,7 +26,8 @@ open Common
 //let lambda = 1.0
 //let alpha = 10.0 
 //let logisiticReg = LogisticRegression.LogReg(alpha, lambda, 100, 0.9, raw)
-
+//
+//let error = logisiticReg.error
 
 // ********************************
 // ********************************
@@ -99,7 +100,7 @@ open Common
 
 // ********************************
 // ********************************
-// New data
+// New data - admittance
 // ********************************
 // ********************************
 let path = @"C:\Users\andre\Source\OSS\EarthDrawn.FSharp.ML\TestingData\LogisitcRegression\binary.csv"
@@ -109,17 +110,19 @@ let lambda = 1.0
 let alpha = 0.01 
 let logisiticReg = LogisticRegression.LogReg(alpha, lambda, 100, 0.9, raw)
 
-
-let indicies = logisiticReg.indices
-let costs = logisiticReg.costs
-let finalTheta = logisiticReg.finalTheta
-let gradients = logisiticReg.gradients
-logisiticReg.y_test
-let pred = logisiticReg.sigmoid(logisiticReg.X_test*finalTheta)
-let compare = pred-logisiticReg.y_test
-let incorrentPredictions = compare 
-                                        |> Matrix.toSeq 
-                                        |> Seq.filter (fun x -> x <> 0.0)
-                                        |> Seq.toList
-
 let error = logisiticReg.error
+let fScore = logisiticReg.fScore
+logisiticReg.precision
+logisiticReg.recall
+
+// ********************************
+// ********************************
+// New data - heart attack
+// ********************************
+// ********************************
+//let path = @"C:\Users\andre\Source\OSS\EarthDrawn.FSharp.ML\TestingData\LogisitcRegression\heart_attack.csv"
+//let raw = Common.readData path
+//let lambda = 1.0
+//let alpha = 0.01 
+//let logisiticReg = LogisticRegression.LogReg(alpha, lambda, 100, 0.5, raw)
+//let error = logisiticReg.error

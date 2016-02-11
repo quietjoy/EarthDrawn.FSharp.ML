@@ -147,16 +147,16 @@ module LogisticRegression =
         // precision
         member this.precision: float =
             let diffSeq  = (this.predictions - this.y_test) |> Matrix.toSeq 
-            let truePos  = (diffSeq |> Seq.filter (fun elem -> elem = 0.0) |> Seq.toList).Length
-            let falsePos = (diffSeq |> Seq.filter (fun elem -> elem = 1.0) |> Seq.toList).Length
-            (float (truePos / (truePos + falsePos)))
+            let truePos  = float ((diffSeq |> Seq.filter (fun elem -> elem = 0.0) |> Seq.toList).Length)
+            let falsePos = float ((diffSeq |> Seq.filter (fun elem -> elem = 1.0) |> Seq.toList).Length)
+            (truePos / (truePos + falsePos))
 
         // recall
         member this.recall: float = 
             let diffSeq  = (this.predictions - this.y_test) |> Matrix.toSeq 
-            let truePos  = (diffSeq |> Seq.filter (fun elem -> elem = 0.0) |> Seq.toList).Length
-            let falseNeg = (diffSeq |> Seq.filter (fun elem -> elem = -1.0) |> Seq.toList).Length
-            (float (truePos / (truePos + falseNeg)))
+            let truePos  = float ((diffSeq |> Seq.filter (fun elem -> elem = 0.0) |> Seq.toList).Length)
+            let falseNeg = float ((diffSeq |> Seq.filter (fun elem -> elem = -1.0) |> Seq.toList).Length)
+            (truePos / (truePos + falseNeg))
 
         // F-score
         member this.fScore: float = 
