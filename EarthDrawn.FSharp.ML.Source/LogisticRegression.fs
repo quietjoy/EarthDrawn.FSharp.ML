@@ -140,7 +140,7 @@ module LogisticRegression =
                                         |> Matrix.toSeq 
                                         |> Seq.filter (fun x -> x <> 0.0)
                                         |> Seq.toList
-            ((float incorrentPredictions.Length) / (float logisiticReg.y_test.RowCount))
+            ((float incorrentPredictions.Length) / (float y.RowCount))
 
         // 2/11 - START HERE
 
