@@ -9,7 +9,7 @@ module LogisticRegression =
     open System.Windows.Forms.DataVisualization
     open FSharp.Charting
 
-    type LogReg (α: float, λ: float, iterations: int, rawData: Matrix<float>) =
+    type LogReg (α: float, λ: float, iterations: int, threshold: float, rawData: Matrix<float>) =
         // features
         member this.features = this.createFeatureMatrix rawData
 
@@ -130,7 +130,7 @@ module LogisticRegression =
         member this.predict (testSet: Matrix<float>): Matrix<float> =
             let htTheta = this.sigmoid(testSet*this.finalTheta)
             htTheta |> Matrix.map (fun x -> match x with 
-                                            | x when x >= 0.5 -> 1.0
+                                            | x when x >= threshold -> 1.0
                                             | _ -> 0.0) 
         
         // Calculate error by comparing predictions and actual values
@@ -159,6 +159,6 @@ module LogisticRegression =
             (float (truePos / (truePos + falseNeg)))
 
         // F-score
-        member this.fScore = 
+        member this.fScore: float = 
             2.0*(this.precision*this.recall/(this.precision + this.recall)) 
 
