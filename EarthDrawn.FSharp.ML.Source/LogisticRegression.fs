@@ -58,7 +58,6 @@ module LogisticRegression =
         member this.createClassificationMatrix (data:Matrix<float>) =
             Matrix.Build.DenseOfColumnVectors(data.Column(data.ColumnCount-1))
 
-        // GRADIENT DESCENT
         // Perform ones step of gradient descent 
         member this.descent (theta:Matrix<float>) =
             let m      = (float this.X_train.RowCount)
@@ -68,7 +67,10 @@ module LogisticRegression =
                             |> Matrix.mapRows (fun i row -> h.[i, 0]*row)
                             |> Matrix.sumCols
                             |> Matrix.Build.DenseOfRowVectors
-            theta - α*((1.0/m) * delt_J.Transpose())
+            let regTerm = theta 
+                            |> Matrix.mapi(fun i j y_i -> if (i<>0) then y_i else 0.0) 
+                            |> Matrix.sum
+            theta - (α*((1.0/m) * delt_J.Transpose()) + (λ/m*regTerm))
 
         // Recursively applies descent function
         member this.gradientDescent (count: int) (gradAccum:Matrix<float>) =
@@ -80,21 +82,22 @@ module LogisticRegression =
             else
                 gradAccum
 
-        // COST FUNCTION
-        // Calculate cost associated with weights
-        // Not regularized yet
+        // cost function with feature normalization
         member this.calculateCost (thetaV:Vector<float>): List<float> =
             let m     = (float this.X_train.RowCount) 
             let theta = Matrix.Build.DenseOfColumnVectors(thetaV)
             let hx    = this.sigmoid (this.X_train*theta)
-            let sum = this.y_train
+            let sum   = this.y_train
                             |> Matrix.mapi (fun i j y_i -> match y_i with
                                                             | 1.0 -> log(hx.[i, 0])
                                                             | _   -> log(1.0-hx.[i, 0]))
                             |> Matrix.sum
-            [(-1.0/m*sum)]
+            let regTerm = theta 
+                            |> Matrix.mapi(fun i j y_i -> if (i<>0) then (y_i**2.0) else 0.0) 
+                            |> Matrix.sum
+            [(-1.0/m*sum) + (λ/(2.0*m)*(regTerm))]
 
-        // Given an array of gradients, calculates the cost associated with each gradient
+        // Calculate the cost associated with each gradient
         member this.findCosts (gradients:Matrix<float>): Matrix<float> = 
             let costs = gradients.EnumerateColumns() 
                             |> Seq.map (fun x -> this.calculateCost x)
@@ -141,8 +144,6 @@ module LogisticRegression =
                                         |> Seq.filter (fun x -> x <> 0.0)
                                         |> Seq.toList
             ((float incorrentPredictions.Length) / (float y.RowCount))
-
-        // 2/11 - START HERE
 
         // precision
         member this.precision: float =

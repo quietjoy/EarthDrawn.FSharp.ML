@@ -85,21 +85,6 @@ open Common
 
 // ********************************
 // ********************************
-// Cost
-// ********************************
-// ********************************
-//let theta = Matrix.Build.DenseOfColumnVectors(logisiticReg.gradients.Column(2))
-//let m     = (float logisiticReg.X_train.RowCount) 
-//let hx    = logisiticReg.sigmoid (logisiticReg.X_train*theta)
-//
-//let costs = logisiticReg.y_train
-//                            |> Matrix.mapi (fun i j y_i -> match y_i with
-//                                                            | 1.0 -> log(hx.[i, 0])
-//                                                            | _   -> log(1.0-hx.[i, 0]))
-//                            |> Matrix.sum
-
-// ********************************
-// ********************************
 // New data - admittance
 // ********************************
 // ********************************
@@ -108,12 +93,30 @@ let path = @"C:\Users\andre\Source\OSS\EarthDrawn.FSharp.ML\TestingData\Logisitc
 let raw = Common.readData path
 let lambda = 1.0
 let alpha = 0.01 
-let logisiticReg = LogisticRegression.LogReg(alpha, lambda, 100, 0.9, raw)
+let logisiticReg = LogisticRegression.LogReg(alpha, lambda, 100, 0.5, raw)
 
 let error = logisiticReg.error
 let fScore = logisiticReg.fScore
 logisiticReg.precision
 logisiticReg.recall
+logisiticReg.costs
+
+// ********************************
+// ********************************
+// Cost
+// ********************************
+// ********************************
+let theta = Matrix.Build.DenseOfColumnVectors(logisiticReg.gradients.Column(2))
+let m     = (float logisiticReg.X_train.RowCount) 
+let hx    = logisiticReg.sigmoid (logisiticReg.X_train*theta)
+
+let costs = logisiticReg.y_train
+                            |> Matrix.mapi (fun i j y_i -> match y_i with
+                                                            | 1.0 -> log(hx.[i, 0])
+                                                            | _   -> log(1.0-hx.[i, 0]))
+                            |> Matrix.sum
+
+
 
 // ********************************
 // ********************************
