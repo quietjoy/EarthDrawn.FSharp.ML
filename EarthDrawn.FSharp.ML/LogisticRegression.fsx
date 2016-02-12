@@ -18,34 +18,21 @@ open Common
 
 
 // ********************************
-// USING MODULE
+// Skin data
 // ********************************
-//let path = @"C:\Users\andre\Source\OSS\EarthDrawn.FSharp.ML\TestingData\LogisitcRegression\Skin_NonSkinSample.csv"
-//
-//let raw = Common.readData path
-//let lambda = 1.0
-//let alpha = 10.0 
-//let logisiticReg = LogisticRegression.LogReg(alpha, lambda, 100, 0.9, raw)
-//
-//let error = logisiticReg.error
+let path = @"C:\Users\andre\Source\OSS\EarthDrawn.FSharp.ML\TestingData\LogisitcRegression\Skin_NonSkinSample.csv"
+
+let raw = Common.readData path
+let lambda = 1.0
+let alpha = 0.1
+let logisiticReg = LogisticRegression.LogReg(alpha, lambda, 100, 0.9, raw, true)
+
+let costs = logisiticReg.costs
+let error = logisiticReg.error
 
 // ********************************
 // ********************************
-// ???
-// ********************************
-// ********************************
-//let costPlot = logisiticReg.costPlot
-//let error = logisiticReg.error
-//let finalTheta = logisiticReg.finalTheta
-//let htTheta = logisiticReg.sigmoid(logisiticReg.X_test*finalTheta) |> Matrix.toArray2
-//let xx = logisiticReg.X_train |> Matrix.toArray2
-//let xxx = logisiticReg.X_test |> Matrix.toArray2
-
-
-
-// ********************************
-// ********************************
-// Predicting from the larger set
+// Much larger skin data set
 // ********************************
 // ********************************
 //let generalModel = @"C:\Users\andre\Source\OSS\EarthDrawn.FSharp.ML\TestingData\LogisitcRegression\Skin_NonSkin_adj.csv"
@@ -63,7 +50,63 @@ open Common
 
 // ********************************
 // ********************************
-// Gradient descent
+// New data - admittance
+// ********************************
+// ********************************
+//let path = @"C:\Users\andre\Source\OSS\EarthDrawn.FSharp.ML\TestingData\LogisitcRegression\binary.csv"
+//
+//let raw = Common.readData path
+//let lambda = 1.0
+//let alpha = 0.01 
+//let logisiticReg = LogisticRegression.LogReg(alpha, lambda, 100, 0.5, raw, true)
+//
+//let feat = logisiticReg.createFeatureMatrix raw
+//
+//
+//
+//let error = logisiticReg.error
+//let fScore = logisiticReg.fScore
+//logisiticReg.precision
+//logisiticReg.recall
+//logisiticReg.costs
+
+
+// ********************************
+// ********************************
+// New data - heart attack
+// ********************************
+// ********************************
+//let path = @"C:\Users\andre\Source\OSS\EarthDrawn.FSharp.ML\TestingData\LogisitcRegression\heart_attack.csv"
+//let raw = Common.readData path
+//let lambda = 1.0
+//let alpha = 0.01 
+//let logisiticReg = LogisticRegression.LogReg(alpha, lambda, 100, 0.5, raw)
+//let error = logisiticReg.error
+
+
+
+
+// ********************************
+// ********************************
+// Cost function
+// ********************************
+// ********************************
+//let theta = Matrix.Build.DenseOfColumnVectors(logisiticReg.gradients.Column(2))
+//let m     = (float logisiticReg.X_train.RowCount) 
+//let hx    = logisiticReg.sigmoid (logisiticReg.X_train*theta)
+//let sum   = logisiticReg.y_train
+//                |> Matrix.mapi (fun i j y_i -> match y_i with
+//                                                | 1.0 -> log(hx.[i, 0])
+//                                                | _   -> log(1.0-hx.[i, 0]))
+//                |> Matrix.sum
+//let regTerm = theta 
+//                |> Matrix.mapi(fun i j y_i -> if (i<>0) then (y_i**2.0) else 0.0) 
+//                |> Matrix.sum
+//[(-1.0/m*sum) + (lambda/(2.0*m)*(regTerm))]
+
+// ********************************
+// ********************************
+// Gradient descent function
 // ********************************
 // ********************************
 //let costs = logisiticReg.costs
@@ -82,59 +125,3 @@ open Common
 //                |> Matrix.sumCols
 //                |> Matrix.Build.DenseOfRowVectors
 //((1.0/m) * delt_J.Transpose())
-
-// ********************************
-// ********************************
-// New data - admittance
-// ********************************
-// ********************************
-let path = @"C:\Users\andre\Source\OSS\EarthDrawn.FSharp.ML\TestingData\LogisitcRegression\binary.csv"
-
-let raw = Common.readData path
-let lambda = 1.0
-let alpha = 0.01 
-let logisiticReg = LogisticRegression.LogReg(alpha, lambda, 100, 0.5, raw, true)
-
-let feat = logisiticReg.createFeatureMatrix raw
-
-
-
-let error = logisiticReg.error
-let fScore = logisiticReg.fScore
-logisiticReg.precision
-logisiticReg.recall
-logisiticReg.costs
-
-// ********************************
-// ********************************
-// Cost
-// ********************************
-// ********************************
-let theta = Matrix.Build.DenseOfColumnVectors(logisiticReg.gradients.Column(2))
-let m     = (float logisiticReg.X_train.RowCount) 
-let hx    = logisiticReg.sigmoid (logisiticReg.X_train*theta)
-let sum   = logisiticReg.y_train
-                |> Matrix.mapi (fun i j y_i -> match y_i with
-                                                | 1.0 -> log(hx.[i, 0])
-                                                | _   -> log(1.0-hx.[i, 0]))
-                |> Matrix.sum
-let regTerm = theta 
-                |> Matrix.mapi(fun i j y_i -> if (i<>0) then (y_i**2.0) else 0.0) 
-                |> Matrix.sum
-[(-1.0/m*sum) + (lambda/(2.0*m)*(regTerm))]
-
-
-
-
-
-// ********************************
-// ********************************
-// New data - heart attack
-// ********************************
-// ********************************
-//let path = @"C:\Users\andre\Source\OSS\EarthDrawn.FSharp.ML\TestingData\LogisitcRegression\heart_attack.csv"
-//let raw = Common.readData path
-//let lambda = 1.0
-//let alpha = 0.01 
-//let logisiticReg = LogisticRegression.LogReg(alpha, lambda, 100, 0.5, raw)
-//let error = logisiticReg.error
