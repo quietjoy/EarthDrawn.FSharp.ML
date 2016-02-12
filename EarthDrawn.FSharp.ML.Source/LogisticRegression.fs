@@ -9,7 +9,7 @@ module LogisticRegression =
     open System.Windows.Forms.DataVisualization
     open FSharp.Charting
 
-    type LogReg (α: float, λ: float, iterations: int, threshold: float, rawData: Matrix<float>) =
+    type LogReg (α: float, λ: float, iterations: int, threshold: float, rawData: Matrix<float>, normalize: Boolean) =
         // features
         member this.features = this.createFeatureMatrix rawData
 
@@ -49,16 +49,29 @@ module LogisticRegression =
         member this.sigmoid (z: Matrix<float>) = 
                z |> Matrix.map (fun x -> 1.0 / (1.0 + (exp -x)))
         
-        // Create feature matrix
+        // normalize a vector to have a mean of 0
+        member this.normalize (x: Vector<float>): Vector<float> =
+            let max  = x.Maximum()
+            let min  = x.Minimum()
+            let range = max - min
+            let mean = (x |> Vector.sum) / (float x.Count)
+            x |> Vector.map (fun x_i -> (x_i-mean)/range)
+
+        // create feature matrix
         member this.createFeatureMatrix (data:Matrix<float>) = 
-            Matrix.Build.Dense(data.RowCount, 1, 1.0)
-                        .Append(data.RemoveColumn(rawData.ColumnCount-1))
+            if normalize then
+                let unNormalizedFeatures = Matrix.Build.Dense(data.RowCount, 1, 1.0)
+                                            .Append(data.RemoveColumn(rawData.ColumnCount-1))
+                unNormalizedFeatures |> Matrix.mapCols (fun i x -> if (i <> 0) then this.normalize x else x)
+            else
+                Matrix.Build.Dense(data.RowCount, 1, 1.0)
+                                .Append(data.RemoveColumn(rawData.ColumnCount-1))
 
         // create classification matrix
         member this.createClassificationMatrix (data:Matrix<float>) =
             Matrix.Build.DenseOfColumnVectors(data.Column(data.ColumnCount-1))
 
-        // Perform ones step of gradient descent 
+        // perform ones step of gradient descent 
         member this.descent (theta:Matrix<float>) =
             let m      = (float this.X_train.RowCount)
             let hx     = this.sigmoid (this.X_train*theta)
@@ -72,7 +85,7 @@ module LogisticRegression =
                             |> Matrix.sum
             theta - (α*((1.0/m) * delt_J.Transpose()) + (λ/m*regTerm))
 
-        // Recursively applies descent function
+        // recursively applies descent function
         member this.gradientDescent (count: int) (gradAccum:Matrix<float>) =
             if count = 0 then
                 this.gradientDescent (count+1) (gradAccum.Append(this.descent this.initialTheta)) 
@@ -97,7 +110,7 @@ module LogisticRegression =
                             |> Matrix.sum
             [(-1.0/m*sum) + (λ/(2.0*m)*(regTerm))]
 
-        // Calculate the cost associated with each gradient
+        // calculate the cost associated with each gradient
         member this.findCosts (gradients:Matrix<float>): Matrix<float> = 
             let costs = gradients.EnumerateColumns() 
                             |> Seq.map (fun x -> this.calculateCost x)
@@ -109,7 +122,9 @@ module LogisticRegression =
         // filter out infinities for now
         // TODO: Make title appear above graph
         member this.generateCostPlot = 
-            let costs = this.costs |> Matrix.toSeq |> Seq.filter (fun x -> x <> infinity)
+            let costs = this.costs 
+                            |> Matrix.toSeq 
+                            |> Seq.filter (fun x -> x <> infinity)
             Chart.Line(costs, Name="Cost", Title="Cost Function")
                 .WithXAxis(Title="Iteration", Min=0.0, Max=(float iterations))
                 .WithYAxis(Title="Cost")

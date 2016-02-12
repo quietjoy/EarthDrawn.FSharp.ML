@@ -93,7 +93,11 @@ let path = @"C:\Users\andre\Source\OSS\EarthDrawn.FSharp.ML\TestingData\Logisitc
 let raw = Common.readData path
 let lambda = 1.0
 let alpha = 0.01 
-let logisiticReg = LogisticRegression.LogReg(alpha, lambda, 100, 0.5, raw)
+let logisiticReg = LogisticRegression.LogReg(alpha, lambda, 100, 0.5, raw, true)
+
+let feat = logisiticReg.createFeatureMatrix raw
+
+
 
 let error = logisiticReg.error
 let fScore = logisiticReg.fScore
@@ -109,12 +113,17 @@ logisiticReg.costs
 let theta = Matrix.Build.DenseOfColumnVectors(logisiticReg.gradients.Column(2))
 let m     = (float logisiticReg.X_train.RowCount) 
 let hx    = logisiticReg.sigmoid (logisiticReg.X_train*theta)
+let sum   = logisiticReg.y_train
+                |> Matrix.mapi (fun i j y_i -> match y_i with
+                                                | 1.0 -> log(hx.[i, 0])
+                                                | _   -> log(1.0-hx.[i, 0]))
+                |> Matrix.sum
+let regTerm = theta 
+                |> Matrix.mapi(fun i j y_i -> if (i<>0) then (y_i**2.0) else 0.0) 
+                |> Matrix.sum
+[(-1.0/m*sum) + (lambda/(2.0*m)*(regTerm))]
 
-let costs = logisiticReg.y_train
-                            |> Matrix.mapi (fun i j y_i -> match y_i with
-                                                            | 1.0 -> log(hx.[i, 0])
-                                                            | _   -> log(1.0-hx.[i, 0]))
-                            |> Matrix.sum
+
 
 
 
