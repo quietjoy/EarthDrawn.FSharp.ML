@@ -38,7 +38,6 @@ module LogisticRegression =
         // Perform Logisitc Regression using gradient descent
         member this.gradients   = this.gradientDescent 0 this.initialTheta
         member this.costs       = this.findCosts this.gradients
-        member this.costPlot    = this.generateCostPlot
         member this.finalTheta  = Matrix.Build.DenseOfColumnVectors(this.gradients.Column(this.gradients.ColumnCount-1))
         
         // Use testing data to get error 
@@ -119,17 +118,17 @@ module LogisticRegression =
 
 
         // cost plot
-        // filter out infinities for now
-        // TODO: Make title appear above graph
-        member this.generateCostPlot = 
-            let costs = this.costs 
-                            |> Matrix.toSeq 
-                            |> Seq.filter (fun x -> x <> infinity)
-            Chart.Line(costs, Name="Cost", Title="Cost Function")
-                .WithXAxis(Title="Iteration", Min=0.0, Max=(float iterations))
-                .WithYAxis(Title="Cost")
-
-
+        member this.costPlot = 
+            let costs = this.costs |> Matrix.toSeq 
+            Chart.Line(costs, Name="Cost")
+                .WithXAxis(Title="Iteration", Min=0.0, 
+                                              Max=(float iterations), 
+                                              TitleFontSize = 14.0)
+                .WithYAxis(Title="Cost", TitleFontSize = 14.0)
+                .WithTitle("Cost Function", InsideArea = false, 
+                                            Alignment = ContentAlignment.TopCenter,
+                                            FontSize = 20.0)
+        
         // Take in the size of the rawData matrix and return a list of tuples that represent
         // 1. indicies of training data (60%) - position 0
         // 2. indicies of c.v. data (20%)     - position 1

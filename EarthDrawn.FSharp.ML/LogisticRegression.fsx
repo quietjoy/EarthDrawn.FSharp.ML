@@ -28,6 +28,7 @@ let alpha = 0.1
 let logisiticReg = LogisticRegression.LogReg(alpha, lambda, 100, 0.9, raw, true)
 
 let costs = logisiticReg.costs
+let co = logisiticReg.costPlot
 let error = logisiticReg.error
 
 // ********************************
