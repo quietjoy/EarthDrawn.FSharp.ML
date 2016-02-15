@@ -22,7 +22,7 @@ let rawData = Common.readData path
 // define topology - list of integers - first layer is defined by data 
 // This would be a NN with 1 hidden layer having 6 nodes and
 // an output layer with one class
-let topolgy = [6, 1]
+let topolgy = [6; 6; 1;]
 
 let λ = 0.01
 
@@ -41,9 +41,46 @@ let indices = Common.getIndicies rawData.RowCount
 let X_train = Common.getSubSetOfMatrix features (indices.[0])
 let y_train = Common.getSubSetOfMatrix classifications (indices.[0])
 
+let iterations = topolgy.Length
+
 // sigmoid
-let sigmoid (z: Matrix<float>) = 
+let sigmoid (z: Matrix<float>): Matrix<float> = 
         z |> Matrix.map (fun x -> 1.0 / (1.0 + (exp -x)))
+
+// add basis term to matrix
+let addBasis (zz: Matrix<float>) =
+    Matrix.Build.Dense(zz.RowCount, 1, 1.0).Append(zz)
+
+// first iteration - if count = 0
+let t1 = DenseMatrix.zero<float> topolgy.[0] X_train.ColumnCount
+let z1 = t1*X_train.Transpose()
+let a2 = addBasis (sigmoid (z1.Transpose()))
+
+// other iterations
+let t2 = DenseMatrix.zero<float> topolgy.[1] (topolgy.[0]+1)
+let z2 = t2*a2.Transpose()
+let a3 = addBasis(sigmoid (z2.Transpose()))
+
+
+// last iteration - if count = transpose.Length
+let t3 = DenseMatrix.zero<float> topolgy.[2] (topolgy.[1]+1)
+let z3 = t3*a3.Transpose()
+let a4 = sigmoid (z3.Transpose())
+
+
+//let rec feedForward (a: Matrix<float>) (count:int): Matrix<float> = 
+//    if count = 0 then
+//        let tn = DenseMatrix.zero<float> topolgy.[0] X_train.ColumnCount
+//        let zn = tn*X_train.Transpose()
+//        let an = addBasis (sigmoid (zn.Transpose()))
+//        feedForward an (count+1)
+//    else if count < topology.Length then
+//        let tn = DenseMatrix.zero<float> topolgy.[(count+1)] (topolgy.[count]+1)
+//        let zn = tn*a.Transpose()
+//        let an = addBasis (sigmoid (zn.Transpose()))
+//        feedForward an (count+1)
+//    let tn = DenseMatrix.zero<float> topolgy.[(count+1)] (topolgy.[count]+1) 
+//    sigmoid (tn*a.Transpose())
 
 // cost function with feature normalization
 let calculateCost (thetaV:Vector<float>): List<float> =
@@ -61,5 +98,5 @@ let calculateCost (thetaV:Vector<float>): List<float> =
     [(-1.0/m*sum) + (λ/(2.0*m)*(regTerm))]
 
 
-//let feedForward = 
+
     
