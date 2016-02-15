@@ -32,3 +32,37 @@
                         |> Seq.toArray
                         |> shuffle
         matrix f2d
+
+
+    let getIndicies (size:int): (List<(int * int)>) =
+        let trainIndex =  int (floor ((float size)*0.6))
+        let cvIndex = trainIndex + (int (floor ((float size)*0.2)))
+        [(0, trainIndex); (trainIndex, cvIndex); (cvIndex, size)]
+
+    // Generate subset of matrix
+    let getSubSetOfMatrix (data: Matrix<float>) (indicies: int * int): (Matrix<float>) =
+        let rowCount = (snd indicies) - (fst indicies)
+        data.SubMatrix((fst indicies), rowCount, 0, data.ColumnCount)
+
+
+    // normalize a vector to have a mean of 0
+    let normalize (x: Vector<float>): Vector<float> =
+        let max  = x.Maximum()
+        let min  = x.Minimum()
+        let range = max - min
+        let mean = (x |> Vector.sum) / (float x.Count)
+        x |> Vector.map (fun x_i -> (x_i-mean)/range)
+
+    // create feature matrix
+    let createFeatureMatrix (data:Matrix<float>) (norm: Boolean) = 
+        if norm then
+            let unNormalizedFeatures = Matrix.Build.Dense(data.RowCount, 1, 1.0)
+                                        .Append(data.RemoveColumn(data.ColumnCount-1))
+            unNormalizedFeatures |> Matrix.mapCols (fun i x -> if (i <> 0) then normalize x else x)
+        else
+            Matrix.Build.Dense(data.RowCount, 1, 1.0)
+                            .Append(data.RemoveColumn(data.ColumnCount-1))
+
+    // create classification matrix
+    let createClassificationMatrix (data:Matrix<float>) =
+        Matrix.Build.DenseOfColumnVectors(data.Column(data.ColumnCount-1))
