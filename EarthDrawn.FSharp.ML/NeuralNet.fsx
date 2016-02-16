@@ -22,7 +22,7 @@ let rawData = Common.readData path
 // define topology - list of integers - first layer is defined by data 
 // This would be a NN with 1 hidden layer having 6 nodes and
 // an output layer with one class
-let topolgy = [6; 6; 1;]
+let topology = [6; 6; 1;]
 
 let λ = 0.01
 
@@ -41,7 +41,7 @@ let indices = Common.getIndicies rawData.RowCount
 let X_train = Common.getSubSetOfMatrix features (indices.[0])
 let y_train = Common.getSubSetOfMatrix classifications (indices.[0])
 
-let iterations = topolgy.Length
+let iterations = topology.Length
 
 // sigmoid
 let sigmoid (z: Matrix<float>): Matrix<float> = 
@@ -51,36 +51,38 @@ let sigmoid (z: Matrix<float>): Matrix<float> =
 let addBasis (zz: Matrix<float>) =
     Matrix.Build.Dense(zz.RowCount, 1, 1.0).Append(zz)
 
-// first iteration - if count = 0
-let t1 = DenseMatrix.zero<float> topolgy.[0] X_train.ColumnCount
-let z1 = t1*X_train.Transpose()
-let a2 = addBasis (sigmoid (z1.Transpose()))
+let initialTheta: List<Matrix<float>> = 
+    let max = (topology.Length-2)
 
-// other iterations
-let t2 = DenseMatrix.zero<float> topolgy.[1] (topolgy.[0]+1)
-let z2 = t2*a2.Transpose()
-let a3 = addBasis(sigmoid (z2.Transpose()))
+    let rec buildThetas (acc:List<Matrix<float>>) (count:int) = 
+        if count <= max then
+            printfn "%i" count
+            let newAcc = List.append acc [(DenseMatrix.zero<float> topology.[count+1] (topology.[count]+1))]
+            buildThetas newAcc (count+1)
+        else
+            acc
 
+    buildThetas ([(DenseMatrix.zero<float> topology.[0] X_train.ColumnCount)]) 1
 
-// last iteration - if count = transpose.Length
-let t3 = DenseMatrix.zero<float> topolgy.[2] (topolgy.[1]+1)
-let z3 = t3*a3.Transpose()
-let a4 = sigmoid (z3.Transpose())
+    
 
+let feedForward (thetas: List<Matrix<float>>): List<Matrix<float>> = 
+    let rec forward (acc: List<Matrix<float>>) (count:int) = 
+        printfn "%i" count
+        let layer = acc.[count]
+        let tn    = thetas.[count]
+        let zn    = tn*layer.Transpose()
+        let an    = addBasis (sigmoid (zn.Transpose()))
 
-//let rec feedForward (a: Matrix<float>) (count:int): Matrix<float> = 
-//    if count = 0 then
-//        let tn = DenseMatrix.zero<float> topolgy.[0] X_train.ColumnCount
-//        let zn = tn*X_train.Transpose()
-//        let an = addBasis (sigmoid (zn.Transpose()))
-//        feedForward an (count+1)
-//    else if count < topology.Length then
-//        let tn = DenseMatrix.zero<float> topolgy.[(count+1)] (topolgy.[count]+1)
-//        let zn = tn*a.Transpose()
-//        let an = addBasis (sigmoid (zn.Transpose()))
-//        feedForward an (count+1)
-//    let tn = DenseMatrix.zero<float> topolgy.[(count+1)] (topolgy.[count]+1) 
-//    sigmoid (tn*a.Transpose())
+        if count < (topology.Length-2) then
+            let newAcc = List.append acc [an]
+            forward newAcc (count+1)
+        else
+            List.append acc [an]
+
+    forward [X_train] 0
+
+feedForward initialTheta
 
 // cost function with feature normalization
 let calculateCost (thetaV:Vector<float>): List<float> =
@@ -99,4 +101,4 @@ let calculateCost (thetaV:Vector<float>): List<float> =
 
 
 
-    
+

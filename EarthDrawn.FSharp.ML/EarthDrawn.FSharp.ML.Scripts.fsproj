@@ -59,6 +59,7 @@
     <Content Include="packages.config" />
     <None Include="LogisticRegression.fsx" />
     <None Include="NeuralNet.fsx" />
+    <None Include="Notes.fsx" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="DotNumerics">
