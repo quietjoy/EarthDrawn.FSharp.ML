@@ -19,11 +19,6 @@ let path = @"C:\Users\andre\Source\OSS\EarthDrawn.FSharp.ML\TestingData\Logisitc
 
 let rawData = Common.readData path
 
-// define topology - list of integers - first layer is defined by data 
-// This would be a NN with 1 hidden layer having 6 nodes and
-// an output layer with one class
-let topology = [6; 6; 1;]
-
 let λ = 0.01
 
 let normalize = false
@@ -41,6 +36,13 @@ let indices = Common.getIndicies rawData.RowCount
 let X_train = Common.getSubSetOfMatrix features (indices.[0])
 let y_train = Common.getSubSetOfMatrix classifications (indices.[0])
 
+// define topology - list of integers
+// This would be a NN with..
+// 1 input layer defined by the feature data
+// 2 hidden layers having 6 nodes each
+// an output layer with one class
+let topology = [X_train.ColumnCount; 6; 6; 1;]
+
 let iterations = topology.Length
 
 // sigmoid
@@ -56,33 +58,65 @@ let initialTheta: List<Matrix<float>> =
 
     let rec buildThetas (acc:List<Matrix<float>>) (count:int) = 
         if count <= max then
-            printfn "%i" count
             let newAcc = List.append acc [(DenseMatrix.zero<float> topology.[count+1] (topology.[count]+1))]
             buildThetas newAcc (count+1)
         else
             acc
 
-    buildThetas ([(DenseMatrix.zero<float> topology.[0] X_train.ColumnCount)]) 1
+    buildThetas ([(DenseMatrix.zero<float> topology.[1] (topology.[0]))]) 1
 
     
 
-let feedForward (thetas: List<Matrix<float>>): List<Matrix<float>> = 
+let forwardPropagation (thetas: List<Matrix<float>>): List<Matrix<float>> = 
     let rec forward (acc: List<Matrix<float>>) (count:int) = 
-        printfn "%i" count
         let layer = acc.[count]
         let tn    = thetas.[count]
         let zn    = tn*layer.Transpose()
-        let an    = addBasis (sigmoid (zn.Transpose()))
 
         if count < (topology.Length-2) then
+            let an    = addBasis (sigmoid (zn.Transpose()))
             let newAcc = List.append acc [an]
             forward newAcc (count+1)
         else
+            let an    = (sigmoid (zn.Transpose()))
             List.append acc [an]
 
     forward [X_train] 0
 
-feedForward initialTheta
+
+// Recursive back propagation
+let backPropagation (thetas: List<Matrix<float>>) (layers: List<Matrix<float>>) =
+    let rec back (acc: List<Matrix<float>>) (countDown:int) =
+        let tn  = thetas.[countDown] 
+        let ln  = acc.[(acc.Length-1)]
+        
+        let an  = layers.[countDown]
+        let gz = an.*(1.-an)
+        
+        printfn "%A" ln
+        printfn "%A" tn
+        
+        let dn = (ln*tn).*gz
+        
+        printfn "%A" dn
+        printfn "%i" countDown
+
+        let newAcc = List.append acc [dn]
+
+        if countDown = 0 then
+            newAcc
+        else 
+            back newAcc (countDown-1)
+
+    let firstError = layers.[(topology.Length-1)] - y_train
+    back [firstError] (topology.Length-2)
+
+
+// Call forwardPropagation
+let layers = forwardPropagation initialTheta
+let backpp = backPropagation initialTheta layers
+
+
 
 // cost function with feature normalization
 let calculateCost (thetaV:Vector<float>): List<float> =
