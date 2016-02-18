@@ -45,13 +45,26 @@ let topology = [X_train.ColumnCount; 6; 6; 1;]
 
 let iterations = topology.Length
 
-// sigmoid
+// sigmoid function
 let sigmoid (z: Matrix<float>): Matrix<float> = 
         z |> Matrix.map (fun x -> 1.0 / (1.0 + (exp -x)))
+
+// sigmoid gradient funciton
+let sigmoidGradient (z: Matrix<float>): Matrix<float> = 
+    let sigZ = sigmoid z
+    sigZ.*(1.0 - sigZ)
 
 // add basis term to matrix
 let addBasis (zz: Matrix<float>) =
     Matrix.Build.Dense(zz.RowCount, 1, 1.0).Append(zz)
+
+let removeBasis (zz: Matrix<float>) =
+    let rowCount = zz.RowCount
+    zz.SubMatrix(0, rowCount, 1, (zz.ColumnCount-1)) 
+    
+// Build a list of matricies that represent the thetas
+// basis term not add for firth theta b/c 
+// X_train accurately represents the size with basis term
 
 let initialTheta: List<Matrix<float>> = 
     let max = (topology.Length-2)
@@ -74,7 +87,7 @@ let forwardPropagation (thetas: List<Matrix<float>>): List<Matrix<float>> =
         let zn    = tn*layer.Transpose()
 
         if count < (topology.Length-2) then
-            let an    = addBasis (sigmoid (zn.Transpose()))
+            let an     = addBasis (sigmoid (zn.Transpose()))
             let newAcc = List.append acc [an]
             forward newAcc (count+1)
         else
@@ -83,24 +96,17 @@ let forwardPropagation (thetas: List<Matrix<float>>): List<Matrix<float>> =
 
     forward [X_train] 0
 
+//let layers = forwardPropagation initialTheta
 
 // Recursive back propagation
 let backPropagation (thetas: List<Matrix<float>>) (layers: List<Matrix<float>>) =
     let rec back (acc: List<Matrix<float>>) (countDown:int) =
-        let tn  = thetas.[countDown] 
+        let tn  = thetas.[countDown]
         let ln  = acc.[(acc.Length-1)]
-        
         let an  = layers.[countDown]
-        let gz = an.*(1.-an)
-        
-        printfn "%A" ln
-        printfn "%A" tn
-        
-        let dn = (ln*tn).*gz
-        
-        printfn "%A" dn
-        printfn "%i" countDown
+        let gz  = sigmoidGradient(an)
 
+        let dn = removeBasis ((ln*tn).*gz)
         let newAcc = List.append acc [dn]
 
         if countDown = 0 then
@@ -108,8 +114,8 @@ let backPropagation (thetas: List<Matrix<float>>) (layers: List<Matrix<float>>) 
         else 
             back newAcc (countDown-1)
 
-    let firstError = layers.[(topology.Length-1)] - y_train
-    back [firstError] (topology.Length-2)
+    let firstError = (layers.[(topology.Length-1)] - y_train)
+    back [firstError] (topology.Length-2)   
 
 
 // Call forwardPropagation
