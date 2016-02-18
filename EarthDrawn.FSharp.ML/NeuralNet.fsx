@@ -54,6 +54,8 @@ let sigmoidGradient (z: Matrix<float>): Matrix<float> =
     let sigZ = sigmoid z
     sigZ.*(1.0 - sigZ)
 
+let M = Matrix<float>.Build;
+let v = MathNet.Numerics.Distributions.ContinuousUniform(0.0, 0.999999)
 // add basis term to matrix
 let addBasis (zz: Matrix<float>) =
     Matrix.Build.Dense(zz.RowCount, 1, 1.0).Append(zz)
@@ -61,6 +63,9 @@ let addBasis (zz: Matrix<float>) =
 let removeBasis (zz: Matrix<float>) =
     let rowCount = zz.RowCount
     zz.SubMatrix(0, rowCount, 1, (zz.ColumnCount-1)) 
+
+let getRandom (row: int) (col: int): Matrix<float> = 
+    M.Random(row, col, v)
     
 // Build a list of matricies that represent the thetas
 // basis term not add for firth theta b/c 
@@ -71,12 +76,12 @@ let initialTheta: List<Matrix<float>> =
 
     let rec buildThetas (acc:List<Matrix<float>>) (count:int) = 
         if count <= max then
-            let newAcc = List.append acc [(DenseMatrix.zero<float> topology.[count+1] (topology.[count]+1))]
+            let newAcc = List.append acc [(getRandom topology.[count+1] (topology.[count]+1))]
             buildThetas newAcc (count+1)
         else
             acc
 
-    buildThetas ([(DenseMatrix.zero<float> topology.[1] (topology.[0]))]) 1
+    buildThetas ([(getRandom topology.[1] (topology.[0]))]) 1
 
     
 
@@ -96,7 +101,6 @@ let forwardPropagation (thetas: List<Matrix<float>>): List<Matrix<float>> =
 
     forward [X_train] 0
 
-//let layers = forwardPropagation initialTheta
 
 // Recursive back propagation
 let backPropagation (thetas: List<Matrix<float>>) (layers: List<Matrix<float>>) =
