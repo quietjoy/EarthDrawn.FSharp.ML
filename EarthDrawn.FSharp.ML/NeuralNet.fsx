@@ -54,23 +54,37 @@ let sigmoidGradient (z: Matrix<float>): Matrix<float> =
     let sigZ = sigmoid z
     sigZ.*(1.0 - sigZ)
 
-let M = Matrix<float>.Build;
-let v = MathNet.Numerics.Distributions.ContinuousUniform(0.0, 0.999999)
+
+
 // add basis term to matrix
 let addBasis (zz: Matrix<float>) =
     Matrix.Build.Dense(zz.RowCount, 1, 1.0).Append(zz)
 
-let removeBasis (zz: Matrix<float>) =
+// remove basis term
+let removeFirstColumn (zz: Matrix<float>) =
     let rowCount = zz.RowCount
     zz.SubMatrix(0, rowCount, 1, (zz.ColumnCount-1)) 
 
+// remove first row
+let removeFirstRow (zz: Matrix<float>) =
+    let columnCount = zz.ColumnCount
+    zz.SubMatrix(1, (zz.RowCount-1), 0, columnCount) 
+
+// Unroll a matrix into a row matrix
+let unroll (zz: Matrix<float>) =
+    let cc = zz.ColumnCount
+    let rc = zz.RowCount
+    Seq.init (rc*cc) (fun r -> ((float (r/cc)), (float ((rc-r)/rc))    ))  |> Seq.toArray
+//    DenseMatrix.ofColumnSeq x
+
+// Build a random matrix from continuous uniform distribution
+let dist = MathNet.Numerics.Distributions.ContinuousUniform(0.0, 0.999999)
 let getRandom (row: int) (col: int): Matrix<float> = 
-    M.Random(row, col, v)
+    Matrix<float>.Build.Random(row, col, dist)
     
 // Build a list of matricies that represent the thetas
-// basis term not add for firth theta b/c 
+// basis term not add for first theta b/c 
 // X_train accurately represents the size with basis term
-
 let initialTheta: List<Matrix<float>> = 
     let max = (topology.Length-2)
 
@@ -83,8 +97,7 @@ let initialTheta: List<Matrix<float>> =
 
     buildThetas ([(getRandom topology.[1] (topology.[0]))]) 1
 
-    
-
+// Recursive forward propogation
 let forwardPropagation (thetas: List<Matrix<float>>): List<Matrix<float>> = 
     let rec forward (acc: List<Matrix<float>>) (count:int) = 
         let layer = acc.[count]
@@ -110,7 +123,7 @@ let backPropagation (thetas: List<Matrix<float>>) (layers: List<Matrix<float>>) 
         let an  = layers.[countDown]
         let gz  = sigmoidGradient(an)
 
-        let dn = removeBasis ((ln*tn).*gz)
+        let dn = removeFirstColumn ((ln*tn).*gz)
         let newAcc = List.append acc [dn]
 
         if countDown = 0 then
@@ -124,20 +137,27 @@ let backPropagation (thetas: List<Matrix<float>>) (layers: List<Matrix<float>>) 
 
 // Call forwardPropagation
 let layers = forwardPropagation initialTheta
+// Call backpropogation
 let backpp = backPropagation initialTheta layers
 
 
+let mLog (zz:Matrix<float>): Matrix<float> =
+    zz |> Matrix.map (fun x -> log(x))
+
+let mLog2 (zz:Matrix<float>): Matrix<float> =
+    zz |> Matrix.map (fun x -> log(1.0-x))
 
 // cost function with feature normalization
-let calculateCost (thetaV:Vector<float>): List<float> =
+// Start here
+let calculateCost (thetas:List<Matrix<float>>): List<float> =
     let m     = (float X_train.RowCount) 
-    let theta = Matrix.Build.DenseOfColumnVectors(thetaV)
-    let hx    = sigmoid (X_train*theta)
-    let sum   = y_train
-                    |> Matrix.mapi (fun i j y_i -> match y_i with
-                                                    | 1.0 -> log(hx.[i, 0])
-                                                    | _   -> log(1.0-hx.[i, 0]))
+    let forward    = forwardPropagation thetas
+    let hx = forward.[(forward.Length-1)]
+    let asd = mLog2 hx
+    let J_theta   = y_train
+                    |> Matrix.map (fun y_i -> (y_i*(mLog hx)) - (y_i*(mLog hx)) )
                     |> Matrix.sum
+    
     let regTerm = theta 
                     |> Matrix.mapi(fun i j y_i -> if (i<>0) then (y_i**2.0) else 0.0) 
                     |> Matrix.sum
