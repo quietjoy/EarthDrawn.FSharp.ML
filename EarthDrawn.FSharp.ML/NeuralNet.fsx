@@ -92,8 +92,16 @@ let initialTheta: List<Matrix<float>> =
             buildThetas newAcc (count+1)
         else
             acc
-
     buildThetas ([(getRandom topology.[1] (topology.[0]))]) 1
+
+let initialDelts: List<Matrix<float>> = 
+    let length = X_train.RowCount
+    let t = Matrix.Build.Dense(length, 1, 0.0)
+    topology |> List.mapi (fun i x -> 
+                                    if i = 0 then Matrix.Build.Dense(length, (x-1), 0.0)
+                                    else  Matrix.Build.Dense(length, x, 0.0))
+
+
 
 // Recursive forward propogation
 let forwardPropagation (thetas: List<Matrix<float>>): List<Matrix<float>> = 
@@ -107,21 +115,22 @@ let forwardPropagation (thetas: List<Matrix<float>>): List<Matrix<float>> =
             let newAcc = List.append acc [an]
             forward newAcc (count+1)
         else
-            let an    = (sigmoid (zn.Transpose()))
+            let an = (sigmoid (zn.Transpose()))
             List.append acc [an]
 
     forward [X_train] 0
 
 
 // Recursive back propagation
-let backPropagation (thetas: List<Matrix<float>>) (layers: List<Matrix<float>>) =
+let backPropagation (thetas: List<Matrix<float>>) (layers: List<Matrix<float>>) (delts: List<Matrix<float>>) =
     let rec back (acc: List<Matrix<float>>) (countDown:int) =
         let tn  = thetas.[countDown]
         let ln  = acc.[(acc.Length-1)]
         let an  = layers.[countDown]
         let gz  = sigmoidGradient(an)
+        let d   = delts.[countDown]
 
-        let dn = removeFirstColumn ((ln*tn).*gz)
+        let dn = d + removeFirstColumn ((ln*tn).*gz)
         let newAcc = List.append acc [dn]
 
         if countDown = 0 then
@@ -130,7 +139,7 @@ let backPropagation (thetas: List<Matrix<float>>) (layers: List<Matrix<float>>) 
             back newAcc (countDown-1)
 
     let firstError = (layers.[(topology.Length-1)] - y_train)
-    back [firstError] (topology.Length-2)   
+    back [firstError] (topology.Length-2) |> List.rev
 
 let mLog (zz:Matrix<float>): Matrix<float> =
     zz |> Matrix.map (fun x -> log(x))
@@ -159,6 +168,5 @@ let calculateCost (hx:Matrix<float>) (thetas:List<Matrix<float>>): List<float> =
 // Call forwardPropagation
 let layers = forwardPropagation initialTheta
 // Call backpropogation
-let backpp = backPropagation initialTheta layers
+let backpp = backPropagation initialTheta layers initialDelts
 // Calculate Cost
-
