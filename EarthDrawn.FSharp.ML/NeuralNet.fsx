@@ -54,8 +54,6 @@ let sigmoidGradient (z: Matrix<float>): Matrix<float> =
     let sigZ = sigmoid z
     sigZ.*(1.0 - sigZ)
 
-
-
 // add basis term to matrix
 let addBasis (zz: Matrix<float>) =
     Matrix.Build.Dense(zz.RowCount, 1, 1.0).Append(zz)
@@ -134,13 +132,6 @@ let backPropagation (thetas: List<Matrix<float>>) (layers: List<Matrix<float>>) 
     let firstError = (layers.[(topology.Length-1)] - y_train)
     back [firstError] (topology.Length-2)   
 
-
-// Call forwardPropagation
-let layers = forwardPropagation initialTheta
-// Call backpropogation
-let backpp = backPropagation initialTheta layers
-
-
 let mLog (zz:Matrix<float>): Matrix<float> =
     zz |> Matrix.map (fun x -> log(x))
 
@@ -149,20 +140,25 @@ let mLog2 (zz:Matrix<float>): Matrix<float> =
 
 // cost function with feature normalization
 // Start here
-let calculateCost (thetas:List<Matrix<float>>): List<float> =
+let calculateCost (hx:Matrix<float>) (thetas:List<Matrix<float>>): List<float> =
     let m     = (float X_train.RowCount) 
-    let forward    = forwardPropagation thetas
-    let hx = forward.[(forward.Length-1)]
-    let asd = mLog2 hx
-    let J_theta   = y_train
-                    |> Matrix.map (fun y_i -> (y_i*(mLog hx)) - (y_i*(mLog hx)) )
-                    |> Matrix.sum
-    
-    let regTerm = theta 
-                    |> Matrix.mapi(fun i j y_i -> if (i<>0) then (y_i**2.0) else 0.0) 
-                    |> Matrix.sum
+    let sum   = y_train
+                |> Matrix.mapi (fun i j y_i -> match y_i with
+                                                | 1.0 -> log(hx.[i, 0])
+                                                | _   -> log(1.0-hx.[i, 0]))
+                |> Matrix.sum
+    let regTerm = thetas 
+                    |> List.map (fun m -> m
+                                        |> Matrix.mapi(fun i j y_i -> if (i<>0) then (y_i**2.0) else 0.0)
+                                        |> Matrix.sum)
+                    |> List.sum
+
     [(-1.0/m*sum) + (λ/(2.0*m)*(regTerm))]
 
 
-
+// Call forwardPropagation
+let layers = forwardPropagation initialTheta
+// Call backpropogation
+let backpp = backPropagation initialTheta layers
+// Calculate Cost
 
