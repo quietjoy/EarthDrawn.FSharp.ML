@@ -133,19 +133,14 @@ let backPropagation (thetas: List<Matrix<float>>) (layers: List<Matrix<float>>) 
         let dn = d + removeFirstColumn ((ln*tn).*gz)
         let newAcc = List.append acc [dn]
 
-        if countDown = 0 then
+        // don't calculate delta for a(1)
+        if countDown = 1 then
             newAcc
         else 
             back newAcc (countDown-1)
 
     let firstError = (layers.[(topology.Length-1)] - y_train)
     back [firstError] (topology.Length-2) |> List.rev
-
-let mLog (zz:Matrix<float>): Matrix<float> =
-    zz |> Matrix.map (fun x -> log(x))
-
-let mLog2 (zz:Matrix<float>): Matrix<float> =
-    zz |> Matrix.map (fun x -> log(1.0-x))
 
 // cost function with feature normalization
 // Start here
@@ -164,9 +159,22 @@ let calculateCost (hx:Matrix<float>) (thetas:List<Matrix<float>>): List<float> =
 
     [(-1.0/m*sum) + (λ/(2.0*m)*(regTerm))]
 
+// Taken from LogisticRegression.fs
+let calculateError (predictions:Matrix<float>) (y: Matrix<float>): float =
+        let compare = predictions-y
+        let incorrentPredictions = compare 
+                                    |> Matrix.toSeq 
+                                    |> Seq.filter (fun x -> x <> 0.0)
+                                    |> Seq.toList
+        ((float incorrentPredictions.Length) / (float y.RowCount))
 
 // Call forwardPropagation
 let layers = forwardPropagation initialTheta
 // Call backpropogation
-let backpp = backPropagation initialTheta layers initialDelts
+let delts = backPropagation initialTheta layers initialDelts
 // Calculate Cost
+let deltAccum = initialDelts |> List.rev |> List.take (initialDelts.Length - 1) |> List.rev
+
+// for 1
+let deltAccum1 = (addBasis delts.[1]).Transpose() * (layers.[0])
+
