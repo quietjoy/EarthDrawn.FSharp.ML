@@ -168,14 +168,38 @@ let calculateError (predictions:Matrix<float>) (y: Matrix<float>): float =
                                     |> Seq.toList
         ((float incorrentPredictions.Length) / (float y.RowCount))
 
+let accumDelta (forwardLayers:List<Matrix<float>>) (backwardsLayers:List<Matrix<float>>): List<Matrix<float>> =
+    let c = forwardLayers.Length
+    let rec getDeltas (accum:List<Matrix<float>>) (count: int) =
+        if count < c then
+            let d = backwardsLayers.[count].Transpose() * forwardLayers.[count]
+            getDeltas (List.append accum [d]) (count+1)
+        else
+            accum
+    getDeltas [] 0
+
+let findPartialDerivates (thetas:List<Matrix<float>>) (deltAccum:List<Matrix<float>>) (λ:float): List<Matrix<float>> =
+    let m = float deltAccum.[0].RowCount
+    let c = thetas.Length
+    let rec calculate (accum:List<Matrix<float>>) (count: int) =
+        if count < c then
+            let d = (1.0/m)*deltAccum.[count] + λ*thetas.[count]
+            calculate (List.append accum [d]) (count+1)
+        else 
+            accum
+    calculate [(1.0/m)*deltAccum.[0]] 1
+
 // Call forwardPropagation
 let forwardLayers = forwardPropagation initialTheta
 // Call backpropogation
 let backwardLayers = (backPropagation initialTheta forwardLayers initialDeltAccums) |> List.rev
-// Calculate Cost
-let deltAccum = initialDeltAccums
+
 
 // partial derivatives
+
 let deltAccum1 = backwardLayers.[0].Transpose() * forwardLayers.[0]
 let deltAccum2 = backwardLayers.[1].Transpose() * forwardLayers.[1]
 let deltAccum3 = backwardLayers.[2].Transpose() * forwardLayers.[2]
+
+let deltAccum = accumDelta forwardLayers backwardLayers
+let updatedThetas = findPartialDerivates initialTheta deltAccum 0.1 
