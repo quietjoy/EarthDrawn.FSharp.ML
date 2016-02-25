@@ -94,13 +94,13 @@ let initialTheta: List<Matrix<float>> =
             acc
     buildThetas ([(getRandom topology.[1] (topology.[0]))]) 1
 
-let initialDelts: List<Matrix<float>> = 
+let initialDeltAccums: List<Matrix<float>> = 
     let length = X_train.RowCount
     let t = Matrix.Build.Dense(length, 1, 0.0)
-    topology |> List.mapi (fun i x -> 
+    let accum = topology |> List.mapi (fun i x -> 
                                     if i = 0 then Matrix.Build.Dense(length, (x-1), 0.0)
                                     else  Matrix.Build.Dense(length, x, 0.0))
-
+    accum |> List.take (accum.Length - 1)
 
 
 // Recursive forward propogation
@@ -140,7 +140,7 @@ let backPropagation (thetas: List<Matrix<float>>) (layers: List<Matrix<float>>) 
             back newAcc (countDown-1)
 
     let firstError = (layers.[(topology.Length-1)] - y_train)
-    back [firstError] (topology.Length-2) |> List.rev
+    back [firstError] (topology.Length-2)
 
 // cost function with feature normalization
 // Start here
@@ -169,12 +169,13 @@ let calculateError (predictions:Matrix<float>) (y: Matrix<float>): float =
         ((float incorrentPredictions.Length) / (float y.RowCount))
 
 // Call forwardPropagation
-let layers = forwardPropagation initialTheta
+let forwardLayers = forwardPropagation initialTheta
 // Call backpropogation
-let delts = backPropagation initialTheta layers initialDelts
+let backwardLayers = (backPropagation initialTheta forwardLayers initialDeltAccums) |> List.rev
 // Calculate Cost
-let deltAccum = initialDelts |> List.rev |> List.take (initialDelts.Length - 1) |> List.rev
+let deltAccum = initialDeltAccums
 
-// for 1
-let deltAccum1 = (addBasis delts.[1]).Transpose() * (layers.[0])
-
+// partial derivatives
+let deltAccum1 = backwardLayers.[0].Transpose() * forwardLayers.[0]
+let deltAccum2 = backwardLayers.[1].Transpose() * forwardLayers.[1]
+let deltAccum3 = backwardLayers.[2].Transpose() * forwardLayers.[2]
