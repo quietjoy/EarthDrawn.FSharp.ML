@@ -122,15 +122,15 @@ let forwardPropagation (thetas: List<Matrix<float>>): List<Matrix<float>> =
 
 
 // Recursive back propagation
-let backPropagation (thetas: List<Matrix<float>>) (layers: List<Matrix<float>>) (delts: List<Matrix<float>>) =
+let backPropagation (thetas: List<Matrix<float>>) (layers: List<Matrix<float>>) =
     let rec back (acc: List<Matrix<float>>) (countDown:int) =
         let tn  = thetas.[countDown]
         let ln  = acc.[(acc.Length-1)]
         let an  = layers.[countDown]
         let gz  = sigmoidGradient(an)
-        let d   = delts.[countDown]
+//        let d   = delts.[countDown]
 
-        let dn = d + removeFirstColumn ((ln*tn).*gz)
+        let dn = removeFirstColumn ((ln*tn).*gz)//d + removeFirstColumn ((ln*tn).*gz)
         let newAcc = List.append acc [dn]
 
         // don't calculate delta for a(1)
@@ -140,7 +140,7 @@ let backPropagation (thetas: List<Matrix<float>>) (layers: List<Matrix<float>>) 
             back newAcc (countDown-1)
 
     let firstError = (layers.[(topology.Length-1)] - y_train)
-    back [firstError] (topology.Length-2)
+    (back [firstError] (topology.Length-2))  |> List.rev
 
 // cost function with feature normalization
 // Start here
@@ -169,7 +169,7 @@ let calculateError (predictions:Matrix<float>) (y: Matrix<float>): float =
         ((float incorrentPredictions.Length) / (float y.RowCount))
 
 let accumDelta (forwardLayers:List<Matrix<float>>) (backwardsLayers:List<Matrix<float>>): List<Matrix<float>> =
-    let c = forwardLayers.Length
+    let c = forwardLayers.Length-1
     let rec getDeltas (accum:List<Matrix<float>>) (count: int) =
         if count < c then
             let d = backwardsLayers.[count].Transpose() * forwardLayers.[count]
@@ -182,24 +182,38 @@ let findPartialDerivates (thetas:List<Matrix<float>>) (deltAccum:List<Matrix<flo
     let m = float deltAccum.[0].RowCount
     let c = thetas.Length
     let rec calculate (accum:List<Matrix<float>>) (count: int) =
+//        printfn "%i %i" count c
         if count < c then
             let d = (1.0/m)*deltAccum.[count] + λ*thetas.[count]
+//            printfn "%A" deltAccum.[count]
             calculate (List.append accum [d]) (count+1)
         else 
             accum
     calculate [(1.0/m)*deltAccum.[0]] 1
 
+        // recursively applies descent function
+let gradientDescent (thetas:List<Matrix<float>>) (iterations: int): List<List<Matrix<float>>> =
+    let rec descent (count: int) (accum: List<List<Matrix<float>>>): List<List<Matrix<float>>> =
+        if count < iterations then
+            let fp = forwardPropagation accum.[(count-1)]
+            let bp = backPropagation accum.[(count-1)] fp
+            let da = accumDelta fp bp
+            let ct = (List.append accum [da])
+            descent (count+1) (List.append accum [da])
+        else 
+            accum
+    descent 1 [thetas]
+            
 // Call forwardPropagation
 let forwardLayers = forwardPropagation initialTheta
 // Call backpropogation
-let backwardLayers = (backPropagation initialTheta forwardLayers initialDeltAccums) |> List.rev
-
-
+let backwardLayers = backPropagation initialTheta forwardLayers
 // partial derivatives
-
-let deltAccum1 = backwardLayers.[0].Transpose() * forwardLayers.[0]
-let deltAccum2 = backwardLayers.[1].Transpose() * forwardLayers.[1]
-let deltAccum3 = backwardLayers.[2].Transpose() * forwardLayers.[2]
-
 let deltAccum = accumDelta forwardLayers backwardLayers
+// update thetas
 let updatedThetas = findPartialDerivates initialTheta deltAccum 0.1 
+// gradient descent 100 iterations
+let gThetas = gradientDescent updatedThetas 100
+let finalThetas = gThetas.[(gThetas.Length-1)]
+// calculate error
+// START HERE
