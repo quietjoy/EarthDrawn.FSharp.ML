@@ -204,6 +204,16 @@ let gradientDescent (thetas:List<Matrix<float>>) (iterations: int): List<List<Ma
             accum
     descent 1 [thetas]
             
+let NNRun (finalThetas: List<Matrix<float>>): Matrix<float> =
+    let rec run (curr: Matrix<float>) (count: int): Matrix<float> =
+        if count < finalThetas.Length then
+            let theta = finalThetas.[(count-1)]
+            run ((curr*theta.Transpose()).Transpose()) (count+1)
+        else 
+            curr
+    let tf = finalThetas.[0]
+    run (X_train*tf.Transpose()) 1
+
 // Call forwardPropagation
 let forwardLayers = forwardPropagation initialTheta
 // Call backpropogation
@@ -215,5 +225,11 @@ let updatedThetas = findPartialDerivates initialTheta deltAccum 0.1
 // gradient descent 100 iterations
 let gThetas = gradientDescent updatedThetas 100
 let finalThetas = gThetas.[(gThetas.Length-1)]
-// calculate error
+// make predicitions
+let predicitions = NNRun finalThetas
+
+(X_train*(finalThetas.[0]).Transpose())
+
+//calculate error
+
 // START HERE
