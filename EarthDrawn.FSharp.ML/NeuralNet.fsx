@@ -19,8 +19,8 @@ let path = @"C:\Users\andre\Source\OSS\EarthDrawn.FSharp.ML\TestingData\Logisitc
 
 let rawData = Common.readData path
 
-let λ = 0.01
-
+let λ = 1.0
+let α = 0.01
 let normalize = false
 
 // features
@@ -85,7 +85,6 @@ let getRandom (row: int) (col: int): Matrix<float> =
 // X_train accurately represents the size with basis term
 let initialTheta: List<Matrix<float>> = 
     let max = (topology.Length-2)
-
     let rec buildThetas (acc:List<Matrix<float>>) (count:int) = 
         if count <= max then
             let newAcc = List.append acc [(getRandom topology.[count+1] (topology.[count]+1))]
@@ -128,9 +127,8 @@ let backPropagation (thetas: List<Matrix<float>>) (layers: List<Matrix<float>>) 
         let ln  = acc.[(acc.Length-1)]
         let an  = layers.[countDown]
         let gz  = sigmoidGradient(an)
-//        let d   = delts.[countDown]
 
-        let dn = removeFirstColumn ((ln*tn).*gz)//d + removeFirstColumn ((ln*tn).*gz)
+        let dn = removeFirstColumn ((ln*tn).*gz)
         let newAcc = List.append acc [dn]
 
         // don't calculate delta for a(1)
@@ -142,23 +140,6 @@ let backPropagation (thetas: List<Matrix<float>>) (layers: List<Matrix<float>>) 
     let firstError = (layers.[(topology.Length-1)] - y_train)
     (back [firstError] (topology.Length-2))  |> List.rev
 
-// cost function with feature normalization
-// Start here
-let calculateCost (hx:Matrix<float>) (thetas:List<Matrix<float>>): List<float> =
-    let m     = (float X_train.RowCount) 
-    let sum   = y_train
-                |> Matrix.mapi (fun i j y_i -> match y_i with
-                                                | 1.0 -> log(hx.[i, 0])
-                                                | _   -> log(1.0-hx.[i, 0]))
-                |> Matrix.sum
-    let regTerm = thetas 
-                    |> List.map (fun m -> m
-                                        |> Matrix.mapi(fun i j y_i -> if (i<>0) then (y_i**2.0) else 0.0)
-                                        |> Matrix.sum)
-                    |> List.sum
-
-    [(-1.0/m*sum) + (λ/(2.0*m)*(regTerm))]
-
 // Taken from LogisticRegression.fs
 let calculateError (predictions:Matrix<float>) (y: Matrix<float>): float =
         let compare = predictions-y
@@ -167,6 +148,7 @@ let calculateError (predictions:Matrix<float>) (y: Matrix<float>): float =
                                     |> Seq.filter (fun x -> x <> 0.0)
                                     |> Seq.toList
         ((float incorrentPredictions.Length) / (float y.RowCount))
+
 
 let accumDelta (forwardLayers:List<Matrix<float>>) (backwardsLayers:List<Matrix<float>>): List<Matrix<float>> =
     let c = forwardLayers.Length-1
@@ -178,28 +160,41 @@ let accumDelta (forwardLayers:List<Matrix<float>>) (backwardsLayers:List<Matrix<
             accum
     getDeltas [] 0
 
-let findPartialDerivates (thetas:List<Matrix<float>>) (deltAccum:List<Matrix<float>>) (λ:float): List<Matrix<float>> =
+let findPartialDerivates (thetas:List<Matrix<float>>) (deltAccum:List<Matrix<float>>): List<Matrix<float>> =
     let m = float deltAccum.[0].RowCount
     let c = thetas.Length
     let rec calculate (accum:List<Matrix<float>>) (count: int) =
-//        printfn "%i %i" count c
         if count < c then
             let d = (1.0/m)*deltAccum.[count] + λ*thetas.[count]
-//            printfn "%A" deltAccum.[count]
             calculate (List.append accum [d]) (count+1)
         else 
             accum
     calculate [(1.0/m)*deltAccum.[0]] 1
 
-        // recursively applies descent function
+// calculate gradient
+let calculateGradient (partialDerivatives: List<Matrix<float>>) (thetas: List<Matrix<float>>): List<Matrix<float>> =
+    let c = thetas.Length
+    let rec updateThetas (accum: List<Matrix<float>>)(count: int) : List<Matrix<float>> =
+        if count < c then
+            let ct = thetas.[count]
+            let pd = partialDerivatives.[count]
+            let ut = ct-(pd*α)
+            updateThetas (List.append accum [ut]) (count+1)
+        else 
+            accum
+    updateThetas [] 0
+
+// recursively applies descent function
 let gradientDescent (thetas:List<Matrix<float>>) (iterations: int): List<List<Matrix<float>>> =
     let rec descent (count: int) (accum: List<List<Matrix<float>>>): List<List<Matrix<float>>> =
         if count < iterations then
-            let fp = forwardPropagation accum.[(count-1)]
-            let bp = backPropagation accum.[(count-1)] fp
+            let ct = accum.[(count-1)]
+            let fp = forwardPropagation ct
+            let bp = backPropagation ct fp
             let da = accumDelta fp bp
-            let ct = (List.append accum [da])
-            descent (count+1) (List.append accum [da])
+            let pd = findPartialDerivates ct da
+            let gd = calculateGradient pd ct
+            descent (count+1) (List.append accum [gd])
         else 
             accum
     descent 1 [thetas]
@@ -218,18 +213,42 @@ let NNRun (finalThetas: List<Matrix<float>>): Matrix<float> =
 let forwardLayers = forwardPropagation initialTheta
 // Call backpropogation
 let backwardLayers = backPropagation initialTheta forwardLayers
-// partial derivatives
+// accumulate Deltas
 let deltAccum = accumDelta forwardLayers backwardLayers
-// update thetas
-let updatedThetas = findPartialDerivates initialTheta deltAccum 0.1 
+// find partial derivatives
+let partialDerivatives = findPartialDerivates initialTheta deltAccum
+// one step of gradient descent
+let updatedThetas = calculateGradient partialDerivatives initialTheta
 // gradient descent 100 iterations
-let gThetas = gradientDescent updatedThetas 100
+let gThetas = gradientDescent partialDerivatives 100
+// get the final thetas
 let finalThetas = gThetas.[(gThetas.Length-1)]
 // make predicitions
 let predicitions = NNRun finalThetas
 
-(X_train*(finalThetas.[0]).Transpose())
+let f = (X_train*(finalThetas.[0]).Transpose())
+let s = f*finalThetas.[1]
+let t = s*finalThetas.[2].Transpose()
 
 //calculate error
+let asd = calculateError t y_train
 
+
+
+// *************
 // START HERE
+// cost function with feature normalization
+let calculateCost (hx:Matrix<float>) (thetas:List<Matrix<float>>): List<float> =
+    let m     = (float X_train.RowCount) 
+    let sum   = y_train
+                |> Matrix.mapi (fun i j y_i -> match y_i with
+                                                | 1.0 -> log(hx.[i, 0])
+                                                | _   -> log(1.0-hx.[i, 0]))
+                |> Matrix.sum
+    let regTerm = thetas 
+                    |> List.map (fun m -> m
+                                        |> Matrix.mapi(fun i j y_i -> if (i<>0) then (y_i**2.0) else 0.0)
+                                        |> Matrix.sum)
+                    |> List.sum
+
+    [(-1.0/m*sum) + (λ/(2.0*m)*(regTerm))]
