@@ -76,7 +76,7 @@ let unroll (zz: Matrix<float>) =
 //    DenseMatrix.ofColumnSeq x
 
 // Build a random matrix from continuous uniform distribution
-let dist = MathNet.Numerics.Distributions.ContinuousUniform(0.0, 0.999999)
+let dist = MathNet.Numerics.Distributions.ContinuousUniform(-0.999999, 0.999999)
 let getRandom (row: int) (col: int): Matrix<float> = 
     Matrix<float>.Build.Random(row, col, dist)
     
@@ -118,7 +118,6 @@ let forwardPropagation (thetas: List<Matrix<float>>): List<Matrix<float>> =
             List.append acc [an]
 
     forward [X_train] 0
-
 
 // Recursive back propagation
 let backPropagation (thetas: List<Matrix<float>>) (layers: List<Matrix<float>>) =
@@ -226,9 +225,9 @@ let finalThetas = gThetas.[(gThetas.Length-1)]
 // make predicitions
 let predicitions = NNRun finalThetas
 
-let f = (X_train*(finalThetas.[0]).Transpose())
-let s = f*finalThetas.[1]
-let t = s*finalThetas.[2].Transpose()
+let f = sigmoid(X_train*(finalThetas.[0]).Transpose())
+let s = sigmoid(f*finalThetas.[1])
+let t = sigmoid(s*finalThetas.[2].Transpose())
 
 //calculate error
 let asd = calculateError t y_train
