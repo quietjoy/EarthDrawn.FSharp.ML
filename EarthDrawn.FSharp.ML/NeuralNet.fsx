@@ -104,42 +104,47 @@ let initialDeltAccums: List<Matrix<float>> =
 
 // Recursive forward propogation
 let forwardPropagation (thetas: List<Matrix<float>>): List<Matrix<float>> = 
-    let rec forward (acc: List<Matrix<float>>) (count:int) = 
-        let layer = acc.[count]
-        let tn    = thetas.[count]
-        let zn    = tn*layer.Transpose()
+    let c = thetas.Length-1
+    let rec propagation (acc: List<Matrix<float>>) (count:int) = 
+        let an = acc.[count]
+        let tn = thetas.[count]
+        let zn = an*tn.Transpose()
+        let hx = sigmoid zn
 
-        if count < (topology.Length-2) then
-            let an     = addBasis (sigmoid (zn.Transpose()))
-            let newAcc = List.append acc [an]
-            forward newAcc (count+1)
+        if count < c then
+            propagation (List.append acc [(addBasis hx)]) (count+1)
         else
-            let an = (sigmoid (zn.Transpose()))
-            List.append acc [an]
+            List.append acc [hx]
 
-    forward [X_train] 0
+    propagation [X_train] 0
 
 // Recursive back propagation
 let backPropagation (thetas: List<Matrix<float>>) (layers: List<Matrix<float>>) =
-    let rec back (acc: List<Matrix<float>>) (countDown:int) =
+    let rec propagation (acc: List<Matrix<float>>) (countDown:int) =
         let tn  = thetas.[countDown]
         let ln  = acc.[(acc.Length-1)]
         let an  = layers.[countDown]
         let gz  = sigmoidGradient(an)
 
         let dn = removeFirstColumn ((ln*tn).*gz)
-        let newAcc = List.append acc [dn]
 
-        // don't calculate delta for a(1)
+        // there is no delt(1) term
         if countDown = 1 then
-            newAcc
+            List.append acc [dn]
         else 
-            back newAcc (countDown-1)
+            propagation (List.append acc [dn]) (countDown-1)
+    
+    // calculate first error
+    let fe = layers.[(topology.Length-1)] - y_train
 
-    let firstError = (layers.[(topology.Length-1)] - y_train)
-    (back [firstError] (topology.Length-2))  |> List.rev
+    // recursively apply back propogation
+    let bp = propagation [fe] (thetas.Length-1)
 
-// Taken from LogisticRegression.fs
+    // return the list in reverse order
+    bp |> List.rev
+
+
+// Taken from LogisticRegression.fs - Calculate the error
 let calculateError (predictions:Matrix<float>) (y: Matrix<float>): float =
         let compare = predictions-y
         let incorrentPredictions = compare 
@@ -225,17 +230,22 @@ let finalThetas = gThetas.[(gThetas.Length-1)]
 // make predicitions
 let predicitions = NNRun finalThetas
 
-let f = sigmoid(X_train*(finalThetas.[0]).Transpose())
-let s = sigmoid(f*finalThetas.[1])
-let t = sigmoid(s*finalThetas.[2].Transpose())
+//let f = sigmoid(X_train*(finalThetas.[0]).Transpose())
+//let s = sigmoid(f*finalThetas.[1])
+//let t = sigmoid(s*finalThetas.[2].Transpose())
+
+let f = sigmoid(X_train*(initialTheta.[0]).Transpose())
+let s = sigmoid(f*initialTheta.[1])
+let t = sigmoid(s*initialTheta.[2].Transpose())
+
+let p = t |> Matrix.map (fun x -> if x > 0.5 then 1.0 else 0.0)
 
 //calculate error
-let asd = calculateError t y_train
+let asd = calculateError p y_train
 
 
 
 // *************
-// START HERE
 // cost function with feature normalization
 let calculateCost (hx:Matrix<float>) (thetas:List<Matrix<float>>): List<float> =
     let m     = (float X_train.RowCount) 
