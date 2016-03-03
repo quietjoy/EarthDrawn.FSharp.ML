@@ -21,6 +21,7 @@ let rawData = Common.readData path
 
 let λ = 1.0
 let α = 0.01
+let threshold = 0.5
 let normalize = false
 
 // features
@@ -35,6 +36,7 @@ let indices = Common.getIndicies rawData.RowCount
 // Build training data
 let X_train = Common.getSubSetOfMatrix features (indices.[0])
 let y_train = Common.getSubSetOfMatrix classifications (indices.[0])
+
 
 // define topology - list of integers
 // This would be a NN with..
@@ -101,6 +103,17 @@ let initialDeltAccums: List<Matrix<float>> =
                                     else  Matrix.Build.Dense(length, x, 0.0))
     accum |> List.take (accum.Length - 1)
 
+let predictByThreshold (p : Matrix<float>): Matrix<float> = 
+    p |> Matrix.map (fun x -> if x >= threshold then 1.0 else 0.0)
+
+let countOnetoZeroRatio (p: Matrix<float>): float =
+    let count = p |> Matrix.toSeq |> Seq.countBy (fun x -> x = 0.0) |> Seq.toArray
+    let zeros = float (snd (count.[1]))
+    let ones  = float (snd (count.[0]))
+    ones / zeros
+
+let explain (p: Matrix<float>): float = 
+    countOnetoZeroRatio (predictByThreshold p)
 
 // Recursive forward propogation
 let forwardPropagation (thetas: List<Matrix<float>>): List<Matrix<float>> = 
@@ -117,6 +130,8 @@ let forwardPropagation (thetas: List<Matrix<float>>): List<Matrix<float>> =
             List.append acc [hx]
 
     propagation [X_train] 0
+
+
 
 // Recursive back propagation
 let backPropagation (thetas: List<Matrix<float>>) (layers: List<Matrix<float>>) =
@@ -135,14 +150,13 @@ let backPropagation (thetas: List<Matrix<float>>) (layers: List<Matrix<float>>) 
             propagation (List.append acc [dn]) (countDown-1)
     
     // calculate first error
-    let fe = layers.[(topology.Length-1)] - y_train
+    let fe = layers.[(layers.Length-1)] - y_train
 
     // recursively apply back propogation
     let bp = propagation [fe] (thetas.Length-1)
 
     // return the list in reverse order
     bp |> List.rev
-
 
 // Taken from LogisticRegression.fs - Calculate the error
 let calculateError (predictions:Matrix<float>) (y: Matrix<float>): float =
@@ -153,6 +167,38 @@ let calculateError (predictions:Matrix<float>) (y: Matrix<float>): float =
                                     |> Seq.toList
         ((float incorrentPredictions.Length) / (float y.RowCount))
 
+let initFunc (m: Matrix<float>) =
+    m |> Matrix.map (fun x -> x)
+
+let removeBasisAndUnroll (m: Matrix<float>): Matrix<float> = 
+    let noBasis = removeFirstColumn m
+    let rowCount = noBasis.RowCount*noBasis.ColumnCount
+    let indexNoBasis (i: int): float =
+        let row = (noBasis.RowCount) - 
+    let initFunc (c: int) (r: int): float =
+        noBasis.[c, r]
+    Matrix.Build.Dense(rowCount, 1, (fun i j -> float j))
+
+removeBasisAndUnroll initialTheta.[1]
+
+// cost function with feature normalization
+let recursiveRegularizedCostFunction (hx:Matrix<float>) (thetas:List<Matrix<float>>): float =
+
+
+    let m     = (float X_train.RowCount) 
+    let sum   = y_train
+                |> Matrix.mapi (fun i j y_i -> match y_i with
+                                                | 1.0 -> log(hx.[i, 0])
+                                                | _   -> log(1.0-hx.[i, 0]))
+                |> Matrix.sum
+    
+    let regTerm = thetas 
+                    |> List.map (fun m -> m
+                                        |> Matrix.mapi(fun i j y_i -> if (i<>0) then (y_i**2.0) else 0.0)
+                                        |> Matrix.sum)
+                    |> List.sum
+
+    (-1.0/m*sum) + (λ/(2.0*m)*(regTerm))
 
 let accumDelta (forwardLayers:List<Matrix<float>>) (backwardsLayers:List<Matrix<float>>): List<Matrix<float>> =
     let c = forwardLayers.Length-1
@@ -238,26 +284,15 @@ let f = sigmoid(X_train*(initialTheta.[0]).Transpose())
 let s = sigmoid(f*initialTheta.[1])
 let t = sigmoid(s*initialTheta.[2].Transpose())
 
-let p = t |> Matrix.map (fun x -> if x > 0.5 then 1.0 else 0.0)
+//
+////calculate error
+//let asd = calculateError p y_train
+//
+//
+//let p = 
+//let count = p |> Matrix.toSeq |> Seq.countBy (fun x -> x = 0.0) |> Seq.toArray
+//let zeros = float (snd (count.[1]))
+//let ones  = float (snd (count.[0]))
+//ones / zeros
+// 
 
-//calculate error
-let asd = calculateError p y_train
-
-
-
-// *************
-// cost function with feature normalization
-let calculateCost (hx:Matrix<float>) (thetas:List<Matrix<float>>): List<float> =
-    let m     = (float X_train.RowCount) 
-    let sum   = y_train
-                |> Matrix.mapi (fun i j y_i -> match y_i with
-                                                | 1.0 -> log(hx.[i, 0])
-                                                | _   -> log(1.0-hx.[i, 0]))
-                |> Matrix.sum
-    let regTerm = thetas 
-                    |> List.map (fun m -> m
-                                        |> Matrix.mapi(fun i j y_i -> if (i<>0) then (y_i**2.0) else 0.0)
-                                        |> Matrix.sum)
-                    |> List.sum
-
-    [(-1.0/m*sum) + (λ/(2.0*m)*(regTerm))]
