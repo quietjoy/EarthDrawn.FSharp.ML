@@ -174,17 +174,16 @@ let removeBasisAndUnroll (m: Matrix<float>): Matrix<float> =
     let noBasis = removeFirstColumn m
     let rowCount = noBasis.RowCount*noBasis.ColumnCount
     let indexNoBasis (i: int): float =
-        let row = (noBasis.RowCount) - 
-    let initFunc (c: int) (r: int): float =
-        noBasis.[c, r]
-    Matrix.Build.Dense(rowCount, 1, (fun i j -> float j))
+        let col = int (Math.Floor((float i)/ float noBasis.ColumnCount)) 
+        let row = i - (col * noBasis.ColumnCount)
+        printfn ("%i %i") row col
+        noBasis.[row, col]
 
-removeBasisAndUnroll initialTheta.[1]
+    Matrix.Build.Dense(rowCount, 1, (fun i j -> indexNoBasis i))
 
 // cost function with feature normalization
 let recursiveRegularizedCostFunction (hx:Matrix<float>) (thetas:List<Matrix<float>>): float =
-
-
+    
     let m     = (float X_train.RowCount) 
     let sum   = y_train
                 |> Matrix.mapi (fun i j y_i -> match y_i with
@@ -194,11 +193,13 @@ let recursiveRegularizedCostFunction (hx:Matrix<float>) (thetas:List<Matrix<floa
     
     let regTerm = thetas 
                     |> List.map (fun m -> m
-                                        |> Matrix.mapi(fun i j y_i -> if (i<>0) then (y_i**2.0) else 0.0)
+                                        |> removeBasisAndUnroll
+                                        |> Matrix.map (fun y_i -> y_i**2.0)
                                         |> Matrix.sum)
                     |> List.sum
 
     (-1.0/m*sum) + (λ/(2.0*m)*(regTerm))
+
 
 let accumDelta (forwardLayers:List<Matrix<float>>) (backwardsLayers:List<Matrix<float>>): List<Matrix<float>> =
     let c = forwardLayers.Length-1
